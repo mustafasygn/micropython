@@ -5,6 +5,7 @@ import network
 import websocket
 import websocket_helper
 import _webrepl
+import ussl as ssl
 
 listen_s = None
 client_s = None
@@ -31,6 +32,7 @@ def setup_conn(port, accept_handler):
 def accept_conn(listen_sock):
     global client_s
     cl, remote_addr = listen_sock.accept()
+    cl = ssl.wrap_socket(cl, server_side=True)
     prev = uos.dupterm(None)
     uos.dupterm(prev)
     if prev:
@@ -57,12 +59,12 @@ def stop():
         listen_s.close()
 
 
-def start(port=8266, password=None):
+def start(port=8888, password=None):
     stop()
     if password is None:
         try:
-            import webrepl_cfg
-            _webrepl.password(webrepl_cfg.PASS)
+            import settings
+            _webrepl.password(settings.webrepl_password)
             setup_conn(port, accept_conn)
             print("Started webrepl in normal mode")
         except:
@@ -73,7 +75,7 @@ def start(port=8266, password=None):
         print("Started webrepl in manual override mode")
 
 
-def start_foreground(port=8266):
+def start_foreground(port=8888):
     stop()
     s = setup_conn(port, None)
     accept_conn(s)

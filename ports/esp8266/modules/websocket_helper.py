@@ -8,12 +8,13 @@ try:
 except:
     import hashlib
 
-DEBUG = 0
+DEBUG = 1
 
 def server_handshake(sock):
     clr = sock.makefile("rwb", 0)
     l = clr.readline()
-    #sys.stdout.write(repr(l))
+    if DEBUG:
+        print("l: %s"%repr(l))
 
     webkey = None
 
@@ -23,10 +24,13 @@ def server_handshake(sock):
             raise OSError("EOF in headers")
         if l == b"\r\n":
             break
+        if DEBUG:
+            print("l: %s"%l)
     #    sys.stdout.write(l)
         h, v = [x.strip() for x in l.split(b":", 1)]
         if DEBUG:
-            print((h, v))
+            print("h: %s"%h)
+            print("v: %s"%v)
         if h == b'Sec-WebSocket-Key':
             webkey = v
 

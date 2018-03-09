@@ -60,7 +60,7 @@ STATIC void mp_reset(void) {
     dupterm_task_init();
 #if MICROPY_MODULE_FROZEN
     pyexec_frozen_module("_boot.py");
-    pyexec_file("boot.py");
+    pyexec_frozen_module("boot.py");
     if (pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
         pyexec_file("main.py");
     }
