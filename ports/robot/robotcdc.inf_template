@@ -86,7 +86,7 @@ ServiceBinary=%12%\usbser.sys
 ;  String Definitions
 
 [Strings]
-MFGFILENAME="pybcdc"
+MFGFILENAME="robotcdc"
 MFGNAME="MicroPython"
 DESCRIPTION="Pyboard USB Comm Port"
 SERVICE="USB Serial Driver"

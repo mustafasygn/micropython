@@ -35,7 +35,7 @@
 #include "extint.h"
 #include "irq.h"
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class ExtInt - configure I/O pins to interrupt on external events
 ///
 /// There are a total of 22 interrupt lines. 16 of these can come from GPIO pins
@@ -50,7 +50,7 @@
 ///
 /// Note: ExtInt will automatically configure the gpio line as an input.
 ///
-///     extint = pyb.ExtInt(pin, pyb.ExtInt.IRQ_FALLING, pyb.Pin.PULL_UP, callback)
+///     extint = robot.ExtInt(pin, robot.ExtInt.IRQ_FALLING, robot.Pin.PULL_UP, callback)
 ///
 /// Now every time a falling edge is seen on the X1 pin, the callback will be
 /// called. Caution: mechanical pushbuttons have "bounce" and pushing or
@@ -66,16 +66,16 @@
 /// All other pin objects go through the pin mapper to come up with one of the
 /// gpio pins.
 ///
-///     extint = pyb.ExtInt(pin, mode, pull, callback)
+///     extint = robot.ExtInt(pin, mode, pull, callback)
 ///
-/// Valid modes are pyb.ExtInt.IRQ_RISING, pyb.ExtInt.IRQ_FALLING,
-/// pyb.ExtInt.IRQ_RISING_FALLING, pyb.ExtInt.EVT_RISING,
-/// pyb.ExtInt.EVT_FALLING, and pyb.ExtInt.EVT_RISING_FALLING.
+/// Valid modes are robot.ExtInt.IRQ_RISING, robot.ExtInt.IRQ_FALLING,
+/// robot.ExtInt.IRQ_RISING_FALLING, robot.ExtInt.EVT_RISING,
+/// robot.ExtInt.EVT_FALLING, and robot.ExtInt.EVT_RISING_FALLING.
 ///
 /// Only the IRQ_xxx modes have been tested. The EVT_xxx modes have
 /// something to do with sleep mode and the WFE instruction.
 ///
-/// Valid pull values are pyb.Pin.PULL_UP, pyb.Pin.PULL_DOWN, pyb.Pin.PULL_NONE.
+/// Valid pull values are robot.Pin.PULL_UP, robot.Pin.PULL_DOWN, robot.Pin.PULL_NONE.
 ///
 /// There is also a C API, so that drivers which require EXTI interrupt lines
 /// can also use this code. See extint.h for the available functions and
@@ -111,11 +111,11 @@ typedef struct {
     mp_int_t line;
 } extint_obj_t;
 
-STATIC uint8_t pyb_extint_mode[EXTI_NUM_VECTORS];
-STATIC bool pyb_extint_hard_irq[EXTI_NUM_VECTORS];
+STATIC uint8_t robot_extint_mode[EXTI_NUM_VECTORS];
+STATIC bool robot_extint_hard_irq[EXTI_NUM_VECTORS];
 
 // The callback arg is a small-int or a ROM Pin object, so no need to scan by GC
-STATIC mp_obj_t pyb_extint_callback_arg[EXTI_NUM_VECTORS];
+STATIC mp_obj_t robot_extint_callback_arg[EXTI_NUM_VECTORS];
 
 #if !defined(ETH)
 #define ETH_WKUP_IRQn   62  // Some MCUs don't have ETH, but we want a value to put in our table
@@ -180,7 +180,7 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "invalid ExtInt Pull: %d", pull));
     }
 
-    mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[v_line];
+    mp_obj_t *cb = &MP_STATE_PORT(robot_extint_callback)[v_line];
     if (!override_callback_obj && *cb != mp_const_none && callback_obj != mp_const_none) {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "ExtInt vector %d is already in use", v_line));
     }
@@ -191,12 +191,12 @@ uint extint_register(mp_obj_t pin_obj, uint32_t mode, uint32_t pull, mp_obj_t ca
     extint_disable(v_line);
 
     *cb = callback_obj;
-    pyb_extint_mode[v_line] = (mode & 0x00010000) ? // GPIO_MODE_IT == 0x00010000
+    robot_extint_mode[v_line] = (mode & 0x00010000) ? // GPIO_MODE_IT == 0x00010000
         EXTI_Mode_Interrupt : EXTI_Mode_Event;
 
     if (*cb != mp_const_none) {
-        pyb_extint_hard_irq[v_line] = true;
-        pyb_extint_callback_arg[v_line] = MP_OBJ_NEW_SMALL_INT(v_line);
+        robot_extint_hard_irq[v_line] = true;
+        robot_extint_callback_arg[v_line] = MP_OBJ_NEW_SMALL_INT(v_line);
 
         mp_hal_gpio_clock_enable(pin->gpio);
         GPIO_InitTypeDef exti;
@@ -220,13 +220,13 @@ void extint_register_pin(const pin_obj_t *pin, uint32_t mode, bool hard_irq, mp_
     uint32_t line = pin->pin;
 
     // Check if the ExtInt line is already in use by another Pin/ExtInt
-    mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[line];
-    if (*cb != mp_const_none && MP_OBJ_FROM_PTR(pin) != pyb_extint_callback_arg[line]) {
-        if (MP_OBJ_IS_SMALL_INT(pyb_extint_callback_arg[line])) {
+    mp_obj_t *cb = &MP_STATE_PORT(robot_extint_callback)[line];
+    if (*cb != mp_const_none && MP_OBJ_FROM_PTR(pin) != robot_extint_callback_arg[line]) {
+        if (MP_OBJ_IS_SMALL_INT(robot_extint_callback_arg[line])) {
             nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError,
                 "ExtInt vector %d is already in use", line));
         } else {
-            const pin_obj_t *other_pin = (const pin_obj_t*)pyb_extint_callback_arg[line];
+            const pin_obj_t *other_pin = (const pin_obj_t*)robot_extint_callback_arg[line];
             nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_OSError,
                 "IRQ resource already taken by Pin('%q')", other_pin->name));
         }
@@ -235,14 +235,14 @@ void extint_register_pin(const pin_obj_t *pin, uint32_t mode, bool hard_irq, mp_
     extint_disable(line);
 
     *cb = callback_obj;
-    pyb_extint_mode[line] = (mode & 0x00010000) ? // GPIO_MODE_IT == 0x00010000
+    robot_extint_mode[line] = (mode & 0x00010000) ? // GPIO_MODE_IT == 0x00010000
         EXTI_Mode_Interrupt : EXTI_Mode_Event;
 
     if (*cb != mp_const_none) {
         // Configure and enable the callback
 
-        pyb_extint_hard_irq[line] = hard_irq;
-        pyb_extint_callback_arg[line] = MP_OBJ_FROM_PTR(pin);
+        robot_extint_hard_irq[line] = hard_irq;
+        robot_extint_callback_arg[line] = MP_OBJ_FROM_PTR(pin);
 
         // Route the GPIO to EXTI
         __HAL_RCC_SYSCFG_CLK_ENABLE();
@@ -280,7 +280,7 @@ void extint_enable(uint line) {
     #if defined(MCU_SERIES_F7)
     // The Cortex-M7 doesn't have bitband support.
     mp_uint_t irq_state = disable_irq();
-    if (pyb_extint_mode[line] == EXTI_Mode_Interrupt) {
+    if (robot_extint_mode[line] == EXTI_Mode_Interrupt) {
         EXTI->IMR |= (1 << line);
     } else {
         EXTI->EMR |= (1 << line);
@@ -290,7 +290,7 @@ void extint_enable(uint line) {
     // Since manipulating IMR/EMR is a read-modify-write, and we want this to
     // be atomic, we use the bit-band area to just affect the bit we're
     // interested in.
-    EXTI_MODE_BB(pyb_extint_mode[line], line) = 1;
+    EXTI_MODE_BB(robot_extint_mode[line], line) = 1;
     #endif
 }
 
@@ -403,26 +403,26 @@ STATIC MP_DEFINE_CONST_STATICMETHOD_OBJ(extint_regs_obj, (mp_obj_t)&extint_regs_
 ///     - `ExtInt.IRQ_FALLING` - trigger on a falling edge;
 ///     - `ExtInt.IRQ_RISING_FALLING` - trigger on a rising or falling edge.
 ///   - `pull` can be one of:
-///     - `pyb.Pin.PULL_NONE` - no pull up or down resistors;
-///     - `pyb.Pin.PULL_UP` - enable the pull-up resistor;
-///     - `pyb.Pin.PULL_DOWN` - enable the pull-down resistor.
+///     - `robot.Pin.PULL_NONE` - no pull up or down resistors;
+///     - `robot.Pin.PULL_UP` - enable the pull-up resistor;
+///     - `robot.Pin.PULL_DOWN` - enable the pull-down resistor.
 ///   - `callback` is the function to call when the interrupt triggers.  The
 ///   callback function must accept exactly 1 argument, which is the line that
 ///   triggered the interrupt.
-STATIC const mp_arg_t pyb_extint_make_new_args[] = {
+STATIC const mp_arg_t robot_extint_make_new_args[] = {
     { MP_QSTR_pin,      MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
     { MP_QSTR_mode,     MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
     { MP_QSTR_pull,     MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
     { MP_QSTR_callback, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
 };
-#define PYB_EXTINT_MAKE_NEW_NUM_ARGS MP_ARRAY_SIZE(pyb_extint_make_new_args)
+#define PYB_EXTINT_MAKE_NEW_NUM_ARGS MP_ARRAY_SIZE(robot_extint_make_new_args)
 
 STATIC mp_obj_t extint_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // type_in == extint_obj_type
 
     // parse args
     mp_arg_val_t vals[PYB_EXTINT_MAKE_NEW_NUM_ARGS];
-    mp_arg_parse_all_kw_array(n_args, n_kw, args, PYB_EXTINT_MAKE_NEW_NUM_ARGS, pyb_extint_make_new_args, vals);
+    mp_arg_parse_all_kw_array(n_args, n_kw, args, PYB_EXTINT_MAKE_NEW_NUM_ARGS, robot_extint_make_new_args, vals);
 
     extint_obj_t *self = m_new_obj(extint_obj_t);
     self->base.type = type;
@@ -467,8 +467,8 @@ const mp_obj_type_t extint_type = {
 
 void extint_init0(void) {
     for (int i = 0; i < PYB_EXTI_NUM_VECTORS; i++) {
-        MP_STATE_PORT(pyb_extint_callback)[i] = mp_const_none;
-        pyb_extint_mode[i] = EXTI_Mode_Interrupt;
+        MP_STATE_PORT(robot_extint_callback)[i] = mp_const_none;
+        robot_extint_mode[i] = EXTI_Mode_Interrupt;
    }
 }
 
@@ -477,11 +477,11 @@ void Handle_EXTI_Irq(uint32_t line) {
     if (__HAL_GPIO_EXTI_GET_FLAG(1 << line)) {
         __HAL_GPIO_EXTI_CLEAR_FLAG(1 << line);
         if (line < EXTI_NUM_VECTORS) {
-            mp_obj_t *cb = &MP_STATE_PORT(pyb_extint_callback)[line];
+            mp_obj_t *cb = &MP_STATE_PORT(robot_extint_callback)[line];
             if (*cb != mp_const_none) {
                 // If it's a soft IRQ handler then just schedule callback for later
-                if (!pyb_extint_hard_irq[line]) {
-                    mp_sched_schedule(*cb, pyb_extint_callback_arg[line]);
+                if (!robot_extint_hard_irq[line]) {
+                    mp_sched_schedule(*cb, robot_extint_callback_arg[line]);
                     return;
                 }
 
@@ -491,7 +491,7 @@ void Handle_EXTI_Irq(uint32_t line) {
                 gc_lock();
                 nlr_buf_t nlr;
                 if (nlr_push(&nlr) == 0) {
-                    mp_call_function_1(*cb, pyb_extint_callback_arg[line]);
+                    mp_call_function_1(*cb, robot_extint_callback_arg[line]);
                     nlr_pop();
                 } else {
                     // Uncaught exception; disable the callback so it doesn't run again.

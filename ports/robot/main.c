@@ -39,7 +39,7 @@
 
 #include "systick.h"
 #include "pendsv.h"
-#include "pybthread.h"
+#include "robotthread.h"
 #include "gccollect.h"
 #include "modmachine.h"
 #include "i2c.h"
@@ -63,7 +63,7 @@
 
 void SystemClock_Config(void);
 
-pyb_thread_t pyb_thread_main;
+robot_thread_t robot_thread_main;
 fs_user_mount_t fs_user_mount_flash;
 
 void flash_error(int n) {
@@ -112,13 +112,13 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 }
 #endif
 
-STATIC mp_obj_t pyb_main(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_main(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_opt, MP_ARG_INT, {.u_int = 0} }
     };
 
     if (MP_OBJ_IS_STR(pos_args[0])) {
-        MP_STATE_PORT(pyb_config_main) = pos_args[0];
+        MP_STATE_PORT(robot_config_main) = pos_args[0];
 
         // parse args
         mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -127,25 +127,25 @@ STATIC mp_obj_t pyb_main(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_a
     }
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(pyb_main_obj, 1, pyb_main);
+MP_DEFINE_CONST_FUN_OBJ_KW(robot_main_obj, 1, robot_main);
 
 static const char fresh_boot_py[] =
 "# boot.py -- run on boot-up\r\n"
 "# can run arbitrary Python, but best to keep it minimal\r\n"
 "\r\n"
 "import machine\r\n"
-"import pyb\r\n"
-"#pyb.main('main.py') # main script to run after this one\r\n"
-"#pyb.usb_mode('VCP+MSC') # act as a serial and a storage device\r\n"
-"#pyb.usb_mode('VCP+HID') # act as a serial device and a mouse\r\n"
+"import robot\r\n"
+"#robot.main('main.py') # main script to run after this one\r\n"
+"#robot.usb_mode('VCP+MSC') # act as a serial and a storage device\r\n"
+"#robot.usb_mode('VCP+HID') # act as a serial device and a mouse\r\n"
 ;
 
 static const char fresh_main_py[] =
 "# main.py -- put your code here!\r\n"
 ;
 
-static const char fresh_pybcdc_inf[] =
-#include "genhdr/pybcdc_inf.h"
+static const char fresh_robotcdc_inf[] =
+#include "genhdr/robotcdc_inf.h"
 ;
 
 static const char fresh_readme_txt[] =
@@ -155,7 +155,7 @@ static const char fresh_readme_txt[] =
 "\r\n"
 "For a serial prompt:\r\n"
 " - Windows: you need to go to 'Device manager', right click on the unknown device,\r\n"
-"   then update the driver software, using the 'pybcdc.inf' file found on this drive.\r\n"
+"   then update the driver software, using the 'robotcdc.inf' file found on this drive.\r\n"
 "   Then use a terminal program like Hyperterminal or putty.\r\n"
 " - Mac OS X: use the command: screen /dev/tty.usbmodem*\r\n"
 " - Linux: use the command: screen /dev/ttyACM0\r\n"
@@ -168,7 +168,7 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
     // init the vfs object
     fs_user_mount_t *vfs_fat = &fs_user_mount_flash;
     vfs_fat->flags = 0;
-    pyb_flash_init_vfs(vfs_fat);
+    robot_flash_init_vfs(vfs_fat);
 
     // try to mount the flash
     FRESULT res = f_mount(&vfs_fat->fatfs);
@@ -190,7 +190,7 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
         }
 
         // set label
-        f_setlabel(&vfs_fat->fatfs, "pybflash");
+        f_setlabel(&vfs_fat->fatfs, "robotflash");
 
         // create empty main.py
         FIL fp;
@@ -201,8 +201,8 @@ MP_NOINLINE STATIC bool init_flash_fs(uint reset_mode) {
         f_close(&fp);
 
         // create .inf driver file
-        f_open(&vfs_fat->fatfs, &fp, "/pybcdc.inf", FA_WRITE | FA_CREATE_ALWAYS);
-        f_write(&fp, fresh_pybcdc_inf, sizeof(fresh_pybcdc_inf) - 1 /* don't count null terminator */, &n);
+        f_open(&vfs_fat->fatfs, &fp, "/robotcdc.inf", FA_WRITE | FA_CREATE_ALWAYS);
+        f_write(&fp, fresh_robotcdc_inf, sizeof(fresh_robotcdc_inf) - 1 /* don't count null terminator */, &n);
         f_close(&fp);
 
         // create readme file
@@ -311,13 +311,13 @@ STATIC bool init_sdcard_fs(bool first_soft_reset) {
             if (first_soft_reset) {
                 // use SD card as medium for the USB MSD
                 #if defined(USE_DEVICE_MODE)
-                pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_SDCARD;
+                robot_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_SDCARD;
                 #endif
             }
 
             #if defined(USE_DEVICE_MODE)
             // only use SD card as current directory if that's what the USB medium is
-            if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_SDCARD)
+            if (robot_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_SDCARD)
             #endif
             {
                 if (first_part) {
@@ -342,7 +342,7 @@ STATIC uint update_reset_mode(uint reset_mode) {
 #if MICROPY_HW_HAS_SWITCH
     if (switch_get()) {
 
-        // The original method used on the pyboard is appropriate if you have 2
+        // The original method used on the robotoard is appropriate if you have 2
         // or more LEDs.
 #if defined(MICROPY_HW_LED2)
         for (uint i = 0; i < 3000; i++) {
@@ -450,7 +450,7 @@ int main(void) {
 
     // basic sub-system init
     #if MICROPY_PY_THREAD
-    pyb_thread_init(&pyb_thread_main);
+    robot_thread_init(&robot_thread_main);
     #endif
     pendsv_init();
     led_init();
@@ -460,7 +460,7 @@ int main(void) {
 
 #if defined(USE_DEVICE_MODE)
     // default to internal flash being the usb medium
-    pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_FLASH;
+    robot_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_FLASH;
 #endif
 
     int first_soft_reset = true;
@@ -542,10 +542,10 @@ soft_reset:
             MP_OBJ_NEW_SMALL_INT(MICROPY_HW_UART_REPL),
             MP_OBJ_NEW_SMALL_INT(MICROPY_HW_UART_REPL_BAUD),
         };
-        MP_STATE_PORT(pyb_stdio_uart) = pyb_uart_type.make_new((mp_obj_t)&pyb_uart_type, MP_ARRAY_SIZE(args), 0, args);
+        MP_STATE_PORT(robot_stdio_uart) = robot_uart_type.make_new((mp_obj_t)&robot_uart_type, MP_ARRAY_SIZE(args), 0, args);
     }
 #else
-    MP_STATE_PORT(pyb_stdio_uart) = NULL;
+    MP_STATE_PORT(robot_stdio_uart) = NULL;
 #endif
 
 #if MICROPY_HW_ENABLE_CAN
@@ -561,7 +561,7 @@ soft_reset:
     #endif
 
     spi_init0();
-    pyb_usb_init0();
+    robot_usb_init0();
 
     // Initialise the local flash filesystem.
     // Create it if needed, mount in on /flash, and set it as current dir.
@@ -589,10 +589,10 @@ soft_reset:
     }
 
     // reset config variables; they should be set by boot.py
-    MP_STATE_PORT(pyb_config_main) = MP_OBJ_NULL;
+    MP_STATE_PORT(robot_config_main) = MP_OBJ_NULL;
 
     // run boot.py, if it exists
-    // TODO perhaps have pyb.reboot([bootpy]) function to soft-reboot and execute custom boot.py
+    // TODO perhaps have robot.reboot([bootpy]) function to soft-reboot and execute custom boot.py
     if (reset_mode == 1 || reset_mode == 3) {
         const char *boot_py = "boot.py";
         mp_import_stat_t stat = mp_import_stat(boot_py);
@@ -624,8 +624,8 @@ soft_reset:
 
 #if defined(USE_DEVICE_MODE)
     // init USB device to default setting if it was not already configured
-    if (!(pyb_usb_flags & PYB_USB_FLAG_USB_MODE_CALLED)) {
-        pyb_usb_dev_init(USBD_VID, USBD_PID_CDC_MSC, USBD_MODE_CDC_MSC, NULL);
+    if (!(robot_usb_flags & PYB_USB_FLAG_USB_MODE_CALLED)) {
+        robot_usb_dev_init(USBD_VID, USBD_PID_CDC_MSC, USBD_MODE_CDC_MSC, NULL);
     }
 #endif
 
@@ -653,10 +653,10 @@ soft_reset:
     // Run the main script from the current directory.
     if ((reset_mode == 1 || reset_mode == 3) && pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
         const char *main_py;
-        if (MP_STATE_PORT(pyb_config_main) == MP_OBJ_NULL) {
+        if (MP_STATE_PORT(robot_config_main) == MP_OBJ_NULL) {
             main_py = "main.py";
         } else {
-            main_py = mp_obj_str_get_str(MP_STATE_PORT(pyb_config_main));
+            main_py = mp_obj_str_get_str(MP_STATE_PORT(robot_config_main));
         }
         mp_import_stat_t stat = mp_import_stat(main_py);
         if (stat == MP_IMPORT_STAT_FILE) {
@@ -699,7 +699,7 @@ soft_reset_exit:
 #endif
 
     #if MICROPY_PY_THREAD
-    pyb_thread_deinit();
+    robot_thread_deinit();
     #endif
 
     first_soft_reset = false;

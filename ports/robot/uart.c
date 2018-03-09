@@ -36,7 +36,7 @@
 #include "irq.h"
 #include "genhdr/pins.h"
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class UART - duplex serial communication bus
 ///
 /// UART implements the standard UART/USART duplex serial communications protocol.  At
@@ -46,7 +46,7 @@
 ///
 /// UART objects can be created and initialised using:
 ///
-///     from pyb import UART
+///     from robot import UART
 ///
 ///     uart = UART(1, 9600)                         # init with given baudrate
 ///     uart.init(9600, bits=8, parity=None, stop=1) # init with given parameters
@@ -74,11 +74,11 @@
 #define CHAR_WIDTH_8BIT (0)
 #define CHAR_WIDTH_9BIT (1)
 
-struct _pyb_uart_obj_t {
+struct _robot_uart_obj_t {
     mp_obj_base_t base;
     UART_HandleTypeDef uart;            // this is 17 words big
     IRQn_Type irqn;
-    pyb_uart_t uart_id : 8;
+    robot_uart_t uart_id : 8;
     bool is_enabled : 1;
     byte char_width;                    // 0 for 7,8 bit chars, 1 for 9 bit chars
     uint16_t char_mask;                 // 0x7f for 7 bit, 0xff for 8 bit, 0x1ff for 9 bit
@@ -90,27 +90,27 @@ struct _pyb_uart_obj_t {
     byte *read_buf;                     // byte or uint16_t, depending on char size
 };
 
-STATIC mp_obj_t pyb_uart_deinit(mp_obj_t self_in);
+STATIC mp_obj_t robot_uart_deinit(mp_obj_t self_in);
 
 void uart_init0(void) {
-    for (int i = 0; i < MP_ARRAY_SIZE(MP_STATE_PORT(pyb_uart_obj_all)); i++) {
-        MP_STATE_PORT(pyb_uart_obj_all)[i] = NULL;
+    for (int i = 0; i < MP_ARRAY_SIZE(MP_STATE_PORT(robot_uart_obj_all)); i++) {
+        MP_STATE_PORT(robot_uart_obj_all)[i] = NULL;
     }
 }
 
 // unregister all interrupt sources
 void uart_deinit(void) {
-    for (int i = 0; i < MP_ARRAY_SIZE(MP_STATE_PORT(pyb_uart_obj_all)); i++) {
-        pyb_uart_obj_t *uart_obj = MP_STATE_PORT(pyb_uart_obj_all)[i];
+    for (int i = 0; i < MP_ARRAY_SIZE(MP_STATE_PORT(robot_uart_obj_all)); i++) {
+        robot_uart_obj_t *uart_obj = MP_STATE_PORT(robot_uart_obj_all)[i];
         if (uart_obj != NULL) {
-            pyb_uart_deinit(uart_obj);
+            robot_uart_deinit(uart_obj);
         }
     }
 }
 
 STATIC bool uart_exists(int uart_id) {
-    if (uart_id > MP_ARRAY_SIZE(MP_STATE_PORT(pyb_uart_obj_all))) {
-        // safeguard against pyb_uart_obj_all array being configured too small
+    if (uart_id > MP_ARRAY_SIZE(MP_STATE_PORT(robot_uart_obj_all))) {
+        // safeguard against robot_uart_obj_all array being configured too small
         return false;
     }
     switch (uart_id) {
@@ -151,7 +151,7 @@ STATIC bool uart_exists(int uart_id) {
 }
 
 // assumes Init parameters have been set up correctly
-STATIC bool uart_init2(pyb_uart_obj_t *uart_obj) {
+STATIC bool uart_init2(robot_uart_obj_t *uart_obj) {
     USART_TypeDef *UARTx;
     IRQn_Type irqn;
     int uart_unit;
@@ -306,7 +306,7 @@ STATIC bool uart_init2(pyb_uart_obj_t *uart_obj) {
 }
 
 /* obsolete and unused
-bool uart_init(pyb_uart_obj_t *uart_obj, uint32_t baudrate) {
+bool uart_init(robot_uart_obj_t *uart_obj, uint32_t baudrate) {
     UART_HandleTypeDef *uh = &uart_obj->uart;
     memset(uh, 0, sizeof(*uh));
     uh->Init.BaudRate = baudrate;
@@ -320,7 +320,7 @@ bool uart_init(pyb_uart_obj_t *uart_obj, uint32_t baudrate) {
 }
 */
 
-mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {
+mp_uint_t uart_rx_any(robot_uart_obj_t *self) {
     int buffer_bytes = self->read_buf_head - self->read_buf_tail;
     if (buffer_bytes < 0) {
         return buffer_bytes + self->read_buf_len;
@@ -334,7 +334,7 @@ mp_uint_t uart_rx_any(pyb_uart_obj_t *self) {
 // Waits at most timeout milliseconds for at least 1 char to become ready for
 // reading (from buf or for direct reading).
 // Returns true if something available, false if not.
-STATIC bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
+STATIC bool uart_rx_wait(robot_uart_obj_t *self, uint32_t timeout) {
     uint32_t start = HAL_GetTick();
     for (;;) {
         if (self->read_buf_tail != self->read_buf_head || __HAL_UART_GET_FLAG(&self->uart, UART_FLAG_RXNE) != RESET) {
@@ -348,7 +348,7 @@ STATIC bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
 }
 
 // assumes there is a character available
-int uart_rx_char(pyb_uart_obj_t *self) {
+int uart_rx_char(robot_uart_obj_t *self) {
     if (self->read_buf_tail != self->read_buf_head) {
         // buffering via IRQ
         int data;
@@ -375,7 +375,7 @@ int uart_rx_char(pyb_uart_obj_t *self) {
 
 // Waits at most timeout milliseconds for TX register to become empty.
 // Returns true if can write, false if can't.
-STATIC bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
+STATIC bool uart_tx_wait(robot_uart_obj_t *self, uint32_t timeout) {
     uint32_t start = HAL_GetTick();
     for (;;) {
         if (__HAL_UART_GET_FLAG(&self->uart, UART_FLAG_TXE)) {
@@ -390,7 +390,7 @@ STATIC bool uart_tx_wait(pyb_uart_obj_t *self, uint32_t timeout) {
 
 // Waits at most timeout milliseconds for UART flag to be set.
 // Returns true if flag is/was set, false on timeout.
-STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t timeout) {
+STATIC bool uart_wait_flag_set(robot_uart_obj_t *self, uint32_t flag, uint32_t timeout) {
     // Note: we don't use WFI to idle in this loop because UART tx doesn't generate
     // an interrupt and the flag can be set quickly if the baudrate is large.
     uint32_t start = HAL_GetTick();
@@ -408,7 +408,7 @@ STATIC bool uart_wait_flag_set(pyb_uart_obj_t *self, uint32_t flag, uint32_t tim
 // num_chars - number of characters to send (9-bit chars count for 2 bytes from src)
 // *errcode - returns 0 for success, MP_Exxx on error
 // returns the number of characters sent (valid even if there was an error)
-STATIC size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_chars, int *errcode) {
+STATIC size_t uart_tx_data(robot_uart_obj_t *self, const void *src_in, size_t num_chars, int *errcode) {
     if (num_chars == 0) {
         *errcode = 0;
         return 0;
@@ -462,7 +462,7 @@ STATIC size_t uart_tx_data(pyb_uart_obj_t *self, const void *src_in, size_t num_
     return num_tx;
 }
 
-void uart_tx_strn(pyb_uart_obj_t *uart_obj, const char *str, uint len) {
+void uart_tx_strn(robot_uart_obj_t *uart_obj, const char *str, uint len) {
     int errcode;
     uart_tx_data(uart_obj, str, len, &errcode);
 }
@@ -470,7 +470,7 @@ void uart_tx_strn(pyb_uart_obj_t *uart_obj, const char *str, uint len) {
 // this IRQ handler is set up to handle RXNE interrupts only
 void uart_irq_handler(mp_uint_t uart_id) {
     // get the uart object
-    pyb_uart_obj_t *self = MP_STATE_PORT(pyb_uart_obj_all)[uart_id - 1];
+    robot_uart_obj_t *self = MP_STATE_PORT(robot_uart_obj_all)[uart_id - 1];
 
     if (self == NULL) {
         // UART object has not been set, so we can't do anything, not
@@ -505,8 +505,8 @@ void uart_irq_handler(mp_uint_t uart_id) {
 /******************************************************************************/
 /* MicroPython bindings                                                       */
 
-STATIC void pyb_uart_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    pyb_uart_obj_t *self = self_in;
+STATIC void robot_uart_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    robot_uart_obj_t *self = self_in;
     if (!self->is_enabled) {
         mp_printf(print, "UART(%u)", self->uart_id);
     } else {
@@ -556,7 +556,7 @@ STATIC void pyb_uart_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
 ///   - `timeout_char` is the timeout in milliseconds to wait between characters.
 ///   - `flow` is RTS | CTS where RTS == 256, CTS == 512
 ///   - `read_buf_len` is the character length of the read buffer (0 to disable).
-STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_uart_init_helper(robot_uart_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_baudrate, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 9600} },
         { MP_QSTR_bits, MP_ARG_INT, {.u_int = 8} },
@@ -722,7 +722,7 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
 ///   - `UART(6)` is on `YA`: `(TX, RX) = (Y1, Y2) = (PC6, PC7)`
 ///   - `UART(3)` is on `YB`: `(TX, RX) = (Y9, Y10) = (PB10, PB11)`
 ///   - `UART(2)` is on: `(TX, RX) = (X3, X4) = (PA2, PA3)`
-STATIC mp_obj_t pyb_uart_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_uart_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 1, MP_OBJ_FUN_ARGS_MAX, true);
 
@@ -765,37 +765,37 @@ STATIC mp_obj_t pyb_uart_make_new(const mp_obj_type_t *type, size_t n_args, size
         }
     }
 
-    pyb_uart_obj_t *self;
-    if (MP_STATE_PORT(pyb_uart_obj_all)[uart_id - 1] == NULL) {
+    robot_uart_obj_t *self;
+    if (MP_STATE_PORT(robot_uart_obj_all)[uart_id - 1] == NULL) {
         // create new UART object
-        self = m_new0(pyb_uart_obj_t, 1);
-        self->base.type = &pyb_uart_type;
+        self = m_new0(robot_uart_obj_t, 1);
+        self->base.type = &robot_uart_type;
         self->uart_id = uart_id;
-        MP_STATE_PORT(pyb_uart_obj_all)[uart_id - 1] = self;
+        MP_STATE_PORT(robot_uart_obj_all)[uart_id - 1] = self;
     } else {
         // reference existing UART object
-        self = MP_STATE_PORT(pyb_uart_obj_all)[uart_id - 1];
+        self = MP_STATE_PORT(robot_uart_obj_all)[uart_id - 1];
     }
 
     if (n_args > 1 || n_kw > 0) {
         // start the peripheral
         mp_map_t kw_args;
         mp_map_init_fixed_table(&kw_args, n_kw, args + n_args);
-        pyb_uart_init_helper(self, n_args - 1, args + 1, &kw_args);
+        robot_uart_init_helper(self, n_args - 1, args + 1, &kw_args);
     }
 
     return self;
 }
 
-STATIC mp_obj_t pyb_uart_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
-    return pyb_uart_init_helper(args[0], n_args - 1, args + 1, kw_args);
+STATIC mp_obj_t robot_uart_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
+    return robot_uart_init_helper(args[0], n_args - 1, args + 1, kw_args);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_uart_init_obj, 1, pyb_uart_init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_uart_init_obj, 1, robot_uart_init);
 
 /// \method deinit()
 /// Turn off the UART bus.
-STATIC mp_obj_t pyb_uart_deinit(mp_obj_t self_in) {
-    pyb_uart_obj_t *self = self_in;
+STATIC mp_obj_t robot_uart_deinit(mp_obj_t self_in) {
+    robot_uart_obj_t *self = self_in;
     self->is_enabled = false;
     UART_HandleTypeDef *uart = &self->uart;
     HAL_UART_DeInit(uart);
@@ -854,21 +854,21 @@ STATIC mp_obj_t pyb_uart_deinit(mp_obj_t self_in) {
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_uart_deinit_obj, pyb_uart_deinit);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_uart_deinit_obj, robot_uart_deinit);
 
 /// \method any()
 /// Return `True` if any characters waiting, else `False`.
-STATIC mp_obj_t pyb_uart_any(mp_obj_t self_in) {
-    pyb_uart_obj_t *self = self_in;
+STATIC mp_obj_t robot_uart_any(mp_obj_t self_in) {
+    robot_uart_obj_t *self = self_in;
     return MP_OBJ_NEW_SMALL_INT(uart_rx_any(self));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_uart_any_obj, pyb_uart_any);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_uart_any_obj, robot_uart_any);
 
 /// \method writechar(char)
 /// Write a single character on the bus.  `char` is an integer to write.
 /// Return value: `None`.
-STATIC mp_obj_t pyb_uart_writechar(mp_obj_t self_in, mp_obj_t char_in) {
-    pyb_uart_obj_t *self = self_in;
+STATIC mp_obj_t robot_uart_writechar(mp_obj_t self_in, mp_obj_t char_in) {
+    robot_uart_obj_t *self = self_in;
 
     // get the character to write (might be 9 bits)
     uint16_t data = mp_obj_get_int(char_in);
@@ -887,13 +887,13 @@ STATIC mp_obj_t pyb_uart_writechar(mp_obj_t self_in, mp_obj_t char_in) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_uart_writechar_obj, pyb_uart_writechar);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_uart_writechar_obj, robot_uart_writechar);
 
 /// \method readchar()
 /// Receive a single character on the bus.
 /// Return value: The character read, as an integer.  Returns -1 on timeout.
-STATIC mp_obj_t pyb_uart_readchar(mp_obj_t self_in) {
-    pyb_uart_obj_t *self = self_in;
+STATIC mp_obj_t robot_uart_readchar(mp_obj_t self_in) {
+    robot_uart_obj_t *self = self_in;
     if (uart_rx_wait(self, self->timeout)) {
         return MP_OBJ_NEW_SMALL_INT(uart_rx_char(self));
     } else {
@@ -901,11 +901,11 @@ STATIC mp_obj_t pyb_uart_readchar(mp_obj_t self_in) {
         return MP_OBJ_NEW_SMALL_INT(-1);
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_uart_readchar_obj, pyb_uart_readchar);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_uart_readchar_obj, robot_uart_readchar);
 
 // uart.sendbreak()
-STATIC mp_obj_t pyb_uart_sendbreak(mp_obj_t self_in) {
-    pyb_uart_obj_t *self = self_in;
+STATIC mp_obj_t robot_uart_sendbreak(mp_obj_t self_in) {
+    robot_uart_obj_t *self = self_in;
     #if defined(MCU_SERIES_F7) || defined(MCU_SERIES_L4)
     self->uart.Instance->RQR = USART_RQR_SBKRQ; // write-only register
     #else
@@ -913,14 +913,14 @@ STATIC mp_obj_t pyb_uart_sendbreak(mp_obj_t self_in) {
     #endif
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_uart_sendbreak_obj, pyb_uart_sendbreak);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_uart_sendbreak_obj, robot_uart_sendbreak);
 
-STATIC const mp_rom_map_elem_t pyb_uart_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t robot_uart_locals_dict_table[] = {
     // instance methods
 
-    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&pyb_uart_init_obj) },
-    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&pyb_uart_deinit_obj) },
-    { MP_ROM_QSTR(MP_QSTR_any), MP_ROM_PTR(&pyb_uart_any_obj) },
+    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&robot_uart_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&robot_uart_deinit_obj) },
+    { MP_ROM_QSTR(MP_QSTR_any), MP_ROM_PTR(&robot_uart_any_obj) },
 
     /// \method read([nbytes])
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&mp_stream_read_obj) },
@@ -931,19 +931,19 @@ STATIC const mp_rom_map_elem_t pyb_uart_locals_dict_table[] = {
     /// \method write(buf)
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&mp_stream_write_obj) },
 
-    { MP_ROM_QSTR(MP_QSTR_writechar), MP_ROM_PTR(&pyb_uart_writechar_obj) },
-    { MP_ROM_QSTR(MP_QSTR_readchar), MP_ROM_PTR(&pyb_uart_readchar_obj) },
-    { MP_ROM_QSTR(MP_QSTR_sendbreak), MP_ROM_PTR(&pyb_uart_sendbreak_obj) },
+    { MP_ROM_QSTR(MP_QSTR_writechar), MP_ROM_PTR(&robot_uart_writechar_obj) },
+    { MP_ROM_QSTR(MP_QSTR_readchar), MP_ROM_PTR(&robot_uart_readchar_obj) },
+    { MP_ROM_QSTR(MP_QSTR_sendbreak), MP_ROM_PTR(&robot_uart_sendbreak_obj) },
 
     // class constants
     { MP_ROM_QSTR(MP_QSTR_RTS), MP_ROM_INT(UART_HWCONTROL_RTS) },
     { MP_ROM_QSTR(MP_QSTR_CTS), MP_ROM_INT(UART_HWCONTROL_CTS) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_uart_locals_dict, pyb_uart_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_uart_locals_dict, robot_uart_locals_dict_table);
 
-STATIC mp_uint_t pyb_uart_read(mp_obj_t self_in, void *buf_in, mp_uint_t size, int *errcode) {
-    pyb_uart_obj_t *self = self_in;
+STATIC mp_uint_t robot_uart_read(mp_obj_t self_in, void *buf_in, mp_uint_t size, int *errcode) {
+    robot_uart_obj_t *self = self_in;
     byte *buf = buf_in;
 
     // check that size is a multiple of character width
@@ -984,8 +984,8 @@ STATIC mp_uint_t pyb_uart_read(mp_obj_t self_in, void *buf_in, mp_uint_t size, i
     }
 }
 
-STATIC mp_uint_t pyb_uart_write(mp_obj_t self_in, const void *buf_in, mp_uint_t size, int *errcode) {
-    pyb_uart_obj_t *self = self_in;
+STATIC mp_uint_t robot_uart_write(mp_obj_t self_in, const void *buf_in, mp_uint_t size, int *errcode) {
+    robot_uart_obj_t *self = self_in;
     const byte *buf = buf_in;
 
     // check that size is a multiple of character width
@@ -1011,8 +1011,8 @@ STATIC mp_uint_t pyb_uart_write(mp_obj_t self_in, const void *buf_in, mp_uint_t 
     }
 }
 
-STATIC mp_uint_t pyb_uart_ioctl(mp_obj_t self_in, mp_uint_t request, mp_uint_t arg, int *errcode) {
-    pyb_uart_obj_t *self = self_in;
+STATIC mp_uint_t robot_uart_ioctl(mp_obj_t self_in, mp_uint_t request, mp_uint_t arg, int *errcode) {
+    robot_uart_obj_t *self = self_in;
     mp_uint_t ret;
     if (request == MP_STREAM_POLL) {
         mp_uint_t flags = arg;
@@ -1031,19 +1031,19 @@ STATIC mp_uint_t pyb_uart_ioctl(mp_obj_t self_in, mp_uint_t request, mp_uint_t a
 }
 
 STATIC const mp_stream_p_t uart_stream_p = {
-    .read = pyb_uart_read,
-    .write = pyb_uart_write,
-    .ioctl = pyb_uart_ioctl,
+    .read = robot_uart_read,
+    .write = robot_uart_write,
+    .ioctl = robot_uart_ioctl,
     .is_text = false,
 };
 
-const mp_obj_type_t pyb_uart_type = {
+const mp_obj_type_t robot_uart_type = {
     { &mp_type_type },
     .name = MP_QSTR_UART,
-    .print = pyb_uart_print,
-    .make_new = pyb_uart_make_new,
+    .print = robot_uart_print,
+    .make_new = robot_uart_make_new,
     .getiter = mp_identity_getiter,
     .iternext = mp_stream_unbuffered_iter,
     .protocol = &uart_stream_p,
-    .locals_dict = (mp_obj_dict_t*)&pyb_uart_locals_dict,
+    .locals_dict = (mp_obj_dict_t*)&robot_uart_locals_dict,
 };

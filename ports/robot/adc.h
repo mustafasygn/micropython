@@ -26,7 +26,7 @@
 #ifndef MICROPY_INCLUDED_STMHAL_ADC_H
 #define MICROPY_INCLUDED_STMHAL_ADC_H
 
-extern const mp_obj_type_t pyb_adc_type;
-extern const mp_obj_type_t pyb_adc_all_type;
+extern const mp_obj_type_t robot_adc_type;
+extern const mp_obj_type_t robot_adc_all_type;
 
 #endif // MICROPY_INCLUDED_STMHAL_ADC_H

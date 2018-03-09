@@ -35,7 +35,7 @@
 #include "pin.h"
 #include "genhdr/pins.h"
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class DAC - digital to analog conversion
 ///
 /// The DAC is used to output analog values (a specific voltage) on pin X5 or pin X6.
@@ -45,7 +45,7 @@
 ///
 /// Example usage:
 ///
-///     from pyb import DAC
+///     from robot import DAC
 ///
 ///     dac = DAC(1)            # create DAC 1 on pin X5
 ///     dac.write(128)          # write a value to the DAC (makes X5 1.65V)
@@ -53,7 +53,7 @@
 /// To output a continuous sine-wave:
 ///
 ///     import math
-///     from pyb import DAC
+///     from robot import DAC
 ///
 ///     # create a buffer containing a sine-wave
 ///     buf = bytearray(100)
@@ -93,7 +93,7 @@ STATIC void TIM6_Config(uint freq) {
 
 STATIC uint32_t TIMx_Config(mp_obj_t timer) {
     // TRGO selection to trigger DAC
-    TIM_HandleTypeDef *tim = pyb_timer_get_handle(timer);
+    TIM_HandleTypeDef *tim = robot_timer_get_handle(timer);
     TIM_MasterConfigTypeDef config;
     config.MasterOutputTrigger = TIM_TRGO_UPDATE;
     config.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
@@ -131,18 +131,18 @@ typedef enum {
     DAC_STATE_WRITE_SINGLE,
     DAC_STATE_BUILTIN_WAVEFORM,
     DAC_STATE_DMA_WAVEFORM, // should be last enum since we use space beyond it
-} pyb_dac_state_t;
+} robot_dac_state_t;
 
-typedef struct _pyb_dac_obj_t {
+typedef struct _robot_dac_obj_t {
     mp_obj_base_t base;
     uint32_t dac_channel; // DAC_CHANNEL_1 or DAC_CHANNEL_2
     const dma_descr_t *tx_dma_descr;
     uint16_t pin; // GPIO_PIN_4 or GPIO_PIN_5
     uint8_t bits; // 8 or 12
     uint8_t state;
-} pyb_dac_obj_t;
+} robot_dac_obj_t;
 
-STATIC mp_obj_t pyb_dac_init_helper(pyb_dac_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_dac_init_helper(robot_dac_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_bits, MP_ARG_INT, {.u_int = 8} },
     };
@@ -203,7 +203,7 @@ STATIC mp_obj_t pyb_dac_init_helper(pyb_dac_obj_t *self, size_t n_args, const mp
 ///
 /// `port` can be a pin object, or an integer (1 or 2).
 /// DAC(1) is on pin X5 and DAC(2) is on pin X6.
-STATIC mp_obj_t pyb_dac_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_dac_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 1, MP_OBJ_FUN_ARGS_MAX, true);
 
@@ -222,8 +222,8 @@ STATIC mp_obj_t pyb_dac_make_new(const mp_obj_type_t *type, size_t n_args, size_
         }
     }
 
-    pyb_dac_obj_t *dac = m_new_obj(pyb_dac_obj_t);
-    dac->base.type = &pyb_dac_type;
+    robot_dac_obj_t *dac = m_new_obj(robot_dac_obj_t);
+    dac->base.type = &robot_dac_type;
 
     if (dac_id == 1) {
         dac->pin = GPIO_PIN_4;
@@ -240,21 +240,21 @@ STATIC mp_obj_t pyb_dac_make_new(const mp_obj_type_t *type, size_t n_args, size_
     // configure the peripheral
     mp_map_t kw_args;
     mp_map_init_fixed_table(&kw_args, n_kw, args + n_args);
-    pyb_dac_init_helper(dac, n_args - 1, args + 1, &kw_args);
+    robot_dac_init_helper(dac, n_args - 1, args + 1, &kw_args);
 
     // return object
     return dac;
 }
 
-STATIC mp_obj_t pyb_dac_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
-    return pyb_dac_init_helper(args[0], n_args - 1, args + 1, kw_args);
+STATIC mp_obj_t robot_dac_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
+    return robot_dac_init_helper(args[0], n_args - 1, args + 1, kw_args);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_dac_init_obj, 1, pyb_dac_init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_dac_init_obj, 1, robot_dac_init);
 
 /// \method deinit()
 /// Turn off the DAC, enable other use of pin.
-STATIC mp_obj_t pyb_dac_deinit(mp_obj_t self_in) {
-    pyb_dac_obj_t *self = self_in;
+STATIC mp_obj_t robot_dac_deinit(mp_obj_t self_in) {
+    robot_dac_obj_t *self = self_in;
     if (self->dac_channel == DAC_CHANNEL_1) {
         DAC_Handle.Instance->CR &= ~DAC_CR_EN1;
         DAC_Handle.Instance->CR |= DAC_CR_BOFF1;
@@ -264,14 +264,14 @@ STATIC mp_obj_t pyb_dac_deinit(mp_obj_t self_in) {
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_dac_deinit_obj, pyb_dac_deinit);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_dac_deinit_obj, robot_dac_deinit);
 
 #if defined(TIM6)
 /// \method noise(freq)
 /// Generate a pseudo-random noise signal.  A new random sample is written
 /// to the DAC output at the given frequency.
-STATIC mp_obj_t pyb_dac_noise(mp_obj_t self_in, mp_obj_t freq) {
-    pyb_dac_obj_t *self = self_in;
+STATIC mp_obj_t robot_dac_noise(mp_obj_t self_in, mp_obj_t freq) {
+    robot_dac_obj_t *self = self_in;
 
     // set TIM6 to trigger the DAC at the given frequency
     TIM6_Config(mp_obj_get_int(freq));
@@ -292,7 +292,7 @@ STATIC mp_obj_t pyb_dac_noise(mp_obj_t self_in, mp_obj_t freq) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_dac_noise_obj, pyb_dac_noise);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_dac_noise_obj, robot_dac_noise);
 #endif
 
 #if defined(TIM6)
@@ -300,8 +300,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_dac_noise_obj, pyb_dac_noise);
 /// Generate a triangle wave.  The value on the DAC output changes at
 /// the given frequency, and the frequence of the repeating triangle wave
 /// itself is 256 (or 1024, need to check) times smaller.
-STATIC mp_obj_t pyb_dac_triangle(mp_obj_t self_in, mp_obj_t freq) {
-    pyb_dac_obj_t *self = self_in;
+STATIC mp_obj_t robot_dac_triangle(mp_obj_t self_in, mp_obj_t freq) {
+    robot_dac_obj_t *self = self_in;
 
     // set TIM6 to trigger the DAC at the given frequency
     TIM6_Config(mp_obj_get_int(freq));
@@ -322,13 +322,13 @@ STATIC mp_obj_t pyb_dac_triangle(mp_obj_t self_in, mp_obj_t freq) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_dac_triangle_obj, pyb_dac_triangle);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_dac_triangle_obj, robot_dac_triangle);
 #endif
 
 /// \method write(value)
 /// Direct access to the DAC output (8 bit only at the moment).
-STATIC mp_obj_t pyb_dac_write(mp_obj_t self_in, mp_obj_t val) {
-    pyb_dac_obj_t *self = self_in;
+STATIC mp_obj_t robot_dac_write(mp_obj_t self_in, mp_obj_t val) {
+    robot_dac_obj_t *self = self_in;
 
     if (self->state != DAC_STATE_WRITE_SINGLE) {
         DAC_ChannelConfTypeDef config;
@@ -347,7 +347,7 @@ STATIC mp_obj_t pyb_dac_write(mp_obj_t self_in, mp_obj_t val) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_dac_write_obj, pyb_dac_write);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_dac_write_obj, robot_dac_write);
 
 #if defined(TIM6)
 /// \method write_timed(data, freq, *, mode=DAC.NORMAL)
@@ -369,7 +369,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_dac_write_obj, pyb_dac_write);
 // and we can reuse the same timer for both DACs (and maybe also ADC) without
 // setting the freq twice.
 // Can still do 1-liner: dac.write_trig(buf, trig=Timer(6, freq=100), loop=True)
-mp_obj_t pyb_dac_write_timed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+mp_obj_t robot_dac_write_timed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_data, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_freq, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
@@ -377,7 +377,7 @@ mp_obj_t pyb_dac_write_timed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     };
 
     // parse args
-    pyb_dac_obj_t *self = pos_args[0];
+    robot_dac_obj_t *self = pos_args[0];
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
@@ -475,18 +475,18 @@ mp_obj_t pyb_dac_write_timed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_dac_write_timed_obj, 1, pyb_dac_write_timed);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_dac_write_timed_obj, 1, robot_dac_write_timed);
 #endif
 
-STATIC const mp_rom_map_elem_t pyb_dac_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t robot_dac_locals_dict_table[] = {
     // instance methods
-    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&pyb_dac_init_obj) },
-    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&pyb_dac_deinit_obj) },
-    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&pyb_dac_write_obj) },
+    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&robot_dac_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&robot_dac_deinit_obj) },
+    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&robot_dac_write_obj) },
     #if defined(TIM6)
-    { MP_ROM_QSTR(MP_QSTR_noise), MP_ROM_PTR(&pyb_dac_noise_obj) },
-    { MP_ROM_QSTR(MP_QSTR_triangle), MP_ROM_PTR(&pyb_dac_triangle_obj) },
-    { MP_ROM_QSTR(MP_QSTR_write_timed), MP_ROM_PTR(&pyb_dac_write_timed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_noise), MP_ROM_PTR(&robot_dac_noise_obj) },
+    { MP_ROM_QSTR(MP_QSTR_triangle), MP_ROM_PTR(&robot_dac_triangle_obj) },
+    { MP_ROM_QSTR(MP_QSTR_write_timed), MP_ROM_PTR(&robot_dac_write_timed_obj) },
     #endif
 
     // class constants
@@ -494,13 +494,13 @@ STATIC const mp_rom_map_elem_t pyb_dac_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_CIRCULAR), MP_ROM_INT(DMA_CIRCULAR) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_dac_locals_dict, pyb_dac_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_dac_locals_dict, robot_dac_locals_dict_table);
 
-const mp_obj_type_t pyb_dac_type = {
+const mp_obj_type_t robot_dac_type = {
     { &mp_type_type },
     .name = MP_QSTR_DAC,
-    .make_new = pyb_dac_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_dac_locals_dict,
+    .make_new = robot_dac_make_new,
+    .locals_dict = (mp_obj_dict_t*)&robot_dac_locals_dict,
 };
 
 #endif // MICROPY_HW_ENABLE_DAC

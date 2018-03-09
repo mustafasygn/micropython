@@ -36,17 +36,17 @@ typedef enum {
     PYB_UART_6 = 6,
     PYB_UART_7 = 7,
     PYB_UART_8 = 8,
-} pyb_uart_t;
+} robot_uart_t;
 
-typedef struct _pyb_uart_obj_t pyb_uart_obj_t;
-extern const mp_obj_type_t pyb_uart_type;
+typedef struct _robot_uart_obj_t robot_uart_obj_t;
+extern const mp_obj_type_t robot_uart_type;
 
 void uart_init0(void);
 void uart_deinit(void);
 void uart_irq_handler(mp_uint_t uart_id);
 
-mp_uint_t uart_rx_any(pyb_uart_obj_t *uart_obj);
-int uart_rx_char(pyb_uart_obj_t *uart_obj);
-void uart_tx_strn(pyb_uart_obj_t *uart_obj, const char *str, uint len);
+mp_uint_t uart_rx_any(robot_uart_obj_t *uart_obj);
+int uart_rx_char(robot_uart_obj_t *uart_obj);
+void uart_tx_strn(robot_uart_obj_t *uart_obj, const char *str, uint len);
 
 #endif // MICROPY_INCLUDED_STMHAL_UART_H

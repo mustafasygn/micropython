@@ -39,7 +39,7 @@
 #include "font_petme128_8x8.h"
 #include "lcd.h"
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class LCD - LCD control for the LCD touch-sensor pyskin
 ///
 /// The LCD class is used to control the LCD on the LCD touch-sensor pyskin,
@@ -48,8 +48,8 @@
 /// The pyskin must be connected in either the X or Y positions, and then
 /// an LCD object is made using:
 ///
-///     lcd = pyb.LCD('X')      # if pyskin is in the X position
-///     lcd = pyb.LCD('Y')      # if pyskin is in the Y position
+///     lcd = robot.LCD('X')      # if pyskin is in the X position
+///     lcd = robot.LCD('Y')      # if pyskin is in the Y position
 ///
 /// Then you can use:
 ///
@@ -73,7 +73,7 @@
 ///         lcd.fill(0)                 # clear the buffer
 ///         lcd.pixel(x, y, 1)          # draw the dot
 ///         lcd.show()                  # show the buffer
-///         pyb.delay(50)               # pause for 50ms
+///         robot.delay(50)               # pause for 50ms
 
 #define LCD_INSTR (0)
 #define LCD_DATA (1)
@@ -85,7 +85,7 @@
 #define LCD_PIX_BUF_H (32)
 #define LCD_PIX_BUF_BYTE_SIZE (LCD_PIX_BUF_W * LCD_PIX_BUF_H / 8)
 
-typedef struct _pyb_lcd_obj_t {
+typedef struct _robot_lcd_obj_t {
     mp_obj_base_t base;
 
     // hardware control for the LCD
@@ -104,13 +104,13 @@ typedef struct _pyb_lcd_obj_t {
     // double buffering for pixel buffer
     byte pix_buf[LCD_PIX_BUF_BYTE_SIZE];
     byte pix_buf2[LCD_PIX_BUF_BYTE_SIZE];
-} pyb_lcd_obj_t;
+} robot_lcd_obj_t;
 
 STATIC void lcd_delay(void) {
     __asm volatile ("nop\nnop");
 }
 
-STATIC void lcd_out(pyb_lcd_obj_t *lcd, int instr_data, uint8_t i) {
+STATIC void lcd_out(robot_lcd_obj_t *lcd, int instr_data, uint8_t i) {
     lcd_delay();
     mp_hal_pin_low(lcd->pin_cs1); // CS=0; enable
     if (instr_data == LCD_INSTR) {
@@ -126,7 +126,7 @@ STATIC void lcd_out(pyb_lcd_obj_t *lcd, int instr_data, uint8_t i) {
 
 // write a string to the LCD at the current cursor location
 // output it straight away (doesn't use the pixel buffer)
-STATIC void lcd_write_strn(pyb_lcd_obj_t *lcd, const char *str, unsigned int len) {
+STATIC void lcd_write_strn(robot_lcd_obj_t *lcd, const char *str, unsigned int len) {
     int redraw_min = lcd->line * LCD_CHAR_BUF_W + lcd->column;
     int redraw_max = redraw_min;
     for (; len > 0; len--, str++) {
@@ -193,7 +193,7 @@ STATIC void lcd_write_strn(pyb_lcd_obj_t *lcd, const char *str, unsigned int len
 ///
 /// Construct an LCD object in the given skin position.  `skin_position` can be 'X' or 'Y', and
 /// should match the position where the LCD pyskin is plugged in.
-STATIC mp_obj_t pyb_lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 1, 1, false);
 
@@ -201,23 +201,23 @@ STATIC mp_obj_t pyb_lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_
     const char *lcd_id = mp_obj_str_get_str(args[0]);
 
     // create lcd object
-    pyb_lcd_obj_t *lcd = m_new_obj(pyb_lcd_obj_t);
-    lcd->base.type = &pyb_lcd_type;
+    robot_lcd_obj_t *lcd = m_new_obj(robot_lcd_obj_t);
+    lcd->base.type = &robot_lcd_type;
 
     // configure pins
     // TODO accept an SPI object and pin objects for full customisation
     if ((lcd_id[0] | 0x20) == 'x' && lcd_id[1] == '\0') {
         lcd->spi = &SPIHandle1;
-        lcd->pin_cs1 = &pyb_pin_X3;
-        lcd->pin_rst = &pyb_pin_X4;
-        lcd->pin_a0 = &pyb_pin_X5;
-        lcd->pin_bl = &pyb_pin_X12;
+        lcd->pin_cs1 = &robot_pin_X3;
+        lcd->pin_rst = &robot_pin_X4;
+        lcd->pin_a0 = &robot_pin_X5;
+        lcd->pin_bl = &robot_pin_X12;
     } else if ((lcd_id[0] | 0x20) == 'y' && lcd_id[1] == '\0') {
         lcd->spi = &SPIHandle2;
-        lcd->pin_cs1 = &pyb_pin_Y3;
-        lcd->pin_rst = &pyb_pin_Y4;
-        lcd->pin_a0 = &pyb_pin_Y5;
-        lcd->pin_bl = &pyb_pin_Y12;
+        lcd->pin_cs1 = &robot_pin_Y3;
+        lcd->pin_rst = &robot_pin_Y4;
+        lcd->pin_a0 = &robot_pin_Y5;
+        lcd->pin_bl = &robot_pin_Y12;
     } else {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError, "LCD(%s) doesn't exist", lcd_id));
     }
@@ -316,8 +316,8 @@ STATIC mp_obj_t pyb_lcd_make_new(const mp_obj_type_t *type, size_t n_args, size_
 /// Send an arbitrary command to the LCD.  Pass 0 for `instr_data` to send an
 /// instruction, otherwise pass 1 to send data.  `buf` is a buffer with the
 /// instructions/data to send.
-STATIC mp_obj_t pyb_lcd_command(mp_obj_t self_in, mp_obj_t instr_data_in, mp_obj_t val) {
-    pyb_lcd_obj_t *self = self_in;
+STATIC mp_obj_t robot_lcd_command(mp_obj_t self_in, mp_obj_t instr_data_in, mp_obj_t val) {
+    robot_lcd_obj_t *self = self_in;
 
     // get whether instr or data
     int instr_data = mp_obj_get_int(instr_data_in);
@@ -325,7 +325,7 @@ STATIC mp_obj_t pyb_lcd_command(mp_obj_t self_in, mp_obj_t instr_data_in, mp_obj
     // get the buffer to send from
     mp_buffer_info_t bufinfo;
     uint8_t data[1];
-    pyb_buf_get_for_send(val, &bufinfo, data);
+    robot_buf_get_for_send(val, &bufinfo, data);
 
     // send the data
     for (uint i = 0; i < bufinfo.len; i++) {
@@ -334,13 +334,13 @@ STATIC mp_obj_t pyb_lcd_command(mp_obj_t self_in, mp_obj_t instr_data_in, mp_obj
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_lcd_command_obj, pyb_lcd_command);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(robot_lcd_command_obj, robot_lcd_command);
 
 /// \method contrast(value)
 ///
 /// Set the contrast of the LCD.  Valid values are between 0 and 47.
-STATIC mp_obj_t pyb_lcd_contrast(mp_obj_t self_in, mp_obj_t contrast_in) {
-    pyb_lcd_obj_t *self = self_in;
+STATIC mp_obj_t robot_lcd_contrast(mp_obj_t self_in, mp_obj_t contrast_in) {
+    robot_lcd_obj_t *self = self_in;
     int contrast = mp_obj_get_int(contrast_in);
     if (contrast < 0) {
         contrast = 0;
@@ -351,13 +351,13 @@ STATIC mp_obj_t pyb_lcd_contrast(mp_obj_t self_in, mp_obj_t contrast_in) {
     lcd_out(self, LCD_INSTR, contrast); // electronic volume register set
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_lcd_contrast_obj, pyb_lcd_contrast);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_lcd_contrast_obj, robot_lcd_contrast);
 
 /// \method light(value)
 ///
 /// Turn the backlight on/off.  True or 1 turns it on, False or 0 turns it off.
-STATIC mp_obj_t pyb_lcd_light(mp_obj_t self_in, mp_obj_t value) {
-    pyb_lcd_obj_t *self = self_in;
+STATIC mp_obj_t robot_lcd_light(mp_obj_t self_in, mp_obj_t value) {
+    robot_lcd_obj_t *self = self_in;
     if (mp_obj_is_true(value)) {
         mp_hal_pin_high(self->pin_bl); // set pin high to turn backlight on
     } else {
@@ -365,27 +365,27 @@ STATIC mp_obj_t pyb_lcd_light(mp_obj_t self_in, mp_obj_t value) {
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_lcd_light_obj, pyb_lcd_light);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_lcd_light_obj, robot_lcd_light);
 
 /// \method write(str)
 ///
 /// Write the string `str` to the screen.  It will appear immediately.
-STATIC mp_obj_t pyb_lcd_write(mp_obj_t self_in, mp_obj_t str) {
-    pyb_lcd_obj_t *self = self_in;
+STATIC mp_obj_t robot_lcd_write(mp_obj_t self_in, mp_obj_t str) {
+    robot_lcd_obj_t *self = self_in;
     size_t len;
     const char *data = mp_obj_str_get_data(str, &len);
     lcd_write_strn(self, data, len);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_lcd_write_obj, pyb_lcd_write);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_lcd_write_obj, robot_lcd_write);
 
 /// \method fill(colour)
 ///
 /// Fill the screen with the given colour (0 or 1 for white or black).
 ///
 /// This method writes to the hidden buffer.  Use `show()` to show the buffer.
-STATIC mp_obj_t pyb_lcd_fill(mp_obj_t self_in, mp_obj_t col_in) {
-    pyb_lcd_obj_t *self = self_in;
+STATIC mp_obj_t robot_lcd_fill(mp_obj_t self_in, mp_obj_t col_in) {
+    robot_lcd_obj_t *self = self_in;
     int col = mp_obj_get_int(col_in);
     if (col) {
         col = 0xff;
@@ -394,15 +394,15 @@ STATIC mp_obj_t pyb_lcd_fill(mp_obj_t self_in, mp_obj_t col_in) {
     memset(self->pix_buf2, col, LCD_PIX_BUF_BYTE_SIZE);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_lcd_fill_obj, pyb_lcd_fill);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_lcd_fill_obj, robot_lcd_fill);
 
 /// \method get(x, y)
 ///
 /// Get the pixel at the position `(x, y)`.  Returns 0 or 1.
 ///
 /// This method reads from the visible buffer.
-STATIC mp_obj_t pyb_lcd_get(mp_obj_t self_in, mp_obj_t x_in, mp_obj_t y_in) {
-    pyb_lcd_obj_t *self = self_in;
+STATIC mp_obj_t robot_lcd_get(mp_obj_t self_in, mp_obj_t x_in, mp_obj_t y_in) {
+    robot_lcd_obj_t *self = self_in;
     int x = mp_obj_get_int(x_in);
     int y = mp_obj_get_int(y_in);
     if (0 <= x && x <= 127 && 0 <= y && y <= 31) {
@@ -413,15 +413,15 @@ STATIC mp_obj_t pyb_lcd_get(mp_obj_t self_in, mp_obj_t x_in, mp_obj_t y_in) {
     }
     return mp_obj_new_int(0);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_lcd_get_obj, pyb_lcd_get);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(robot_lcd_get_obj, robot_lcd_get);
 
 /// \method pixel(x, y, colour)
 ///
 /// Set the pixel at `(x, y)` to the given colour (0 or 1).
 ///
 /// This method writes to the hidden buffer.  Use `show()` to show the buffer.
-STATIC mp_obj_t pyb_lcd_pixel(size_t n_args, const mp_obj_t *args) {
-    pyb_lcd_obj_t *self = args[0];
+STATIC mp_obj_t robot_lcd_pixel(size_t n_args, const mp_obj_t *args) {
+    robot_lcd_obj_t *self = args[0];
     int x = mp_obj_get_int(args[1]);
     int y = mp_obj_get_int(args[2]);
     if (0 <= x && x <= 127 && 0 <= y && y <= 31) {
@@ -434,16 +434,16 @@ STATIC mp_obj_t pyb_lcd_pixel(size_t n_args, const mp_obj_t *args) {
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_lcd_pixel_obj, 4, 4, pyb_lcd_pixel);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robot_lcd_pixel_obj, 4, 4, robot_lcd_pixel);
 
 /// \method text(str, x, y, colour)
 ///
 /// Draw the given text to the position `(x, y)` using the given colour (0 or 1).
 ///
 /// This method writes to the hidden buffer.  Use `show()` to show the buffer.
-STATIC mp_obj_t pyb_lcd_text(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t robot_lcd_text(size_t n_args, const mp_obj_t *args) {
     // extract arguments
-    pyb_lcd_obj_t *self = args[0];
+    robot_lcd_obj_t *self = args[0];
     size_t len;
     const char *data = mp_obj_str_get_data(args[1], &len);
     int x0 = mp_obj_get_int(args[2]);
@@ -483,13 +483,13 @@ STATIC mp_obj_t pyb_lcd_text(size_t n_args, const mp_obj_t *args) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_lcd_text_obj, 5, 5, pyb_lcd_text);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robot_lcd_text_obj, 5, 5, robot_lcd_text);
 
 /// \method show()
 ///
 /// Show the hidden buffer on the screen.
-STATIC mp_obj_t pyb_lcd_show(mp_obj_t self_in) {
-    pyb_lcd_obj_t *self = self_in;
+STATIC mp_obj_t robot_lcd_show(mp_obj_t self_in) {
+    robot_lcd_obj_t *self = self_in;
     memcpy(self->pix_buf, self->pix_buf2, LCD_PIX_BUF_BYTE_SIZE);
     for (uint page = 0; page < 4; page++) {
         lcd_out(self, LCD_INSTR, 0xb0 | page); // page address set
@@ -501,28 +501,28 @@ STATIC mp_obj_t pyb_lcd_show(mp_obj_t self_in) {
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_lcd_show_obj, pyb_lcd_show);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_lcd_show_obj, robot_lcd_show);
 
-STATIC const mp_rom_map_elem_t pyb_lcd_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t robot_lcd_locals_dict_table[] = {
     // instance methods
-    { MP_ROM_QSTR(MP_QSTR_command), MP_ROM_PTR(&pyb_lcd_command_obj) },
-    { MP_ROM_QSTR(MP_QSTR_contrast), MP_ROM_PTR(&pyb_lcd_contrast_obj) },
-    { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_PTR(&pyb_lcd_light_obj) },
-    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&pyb_lcd_write_obj) },
-    { MP_ROM_QSTR(MP_QSTR_fill), MP_ROM_PTR(&pyb_lcd_fill_obj) },
-    { MP_ROM_QSTR(MP_QSTR_get), MP_ROM_PTR(&pyb_lcd_get_obj) },
-    { MP_ROM_QSTR(MP_QSTR_pixel), MP_ROM_PTR(&pyb_lcd_pixel_obj) },
-    { MP_ROM_QSTR(MP_QSTR_text), MP_ROM_PTR(&pyb_lcd_text_obj) },
-    { MP_ROM_QSTR(MP_QSTR_show), MP_ROM_PTR(&pyb_lcd_show_obj) },
+    { MP_ROM_QSTR(MP_QSTR_command), MP_ROM_PTR(&robot_lcd_command_obj) },
+    { MP_ROM_QSTR(MP_QSTR_contrast), MP_ROM_PTR(&robot_lcd_contrast_obj) },
+    { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_PTR(&robot_lcd_light_obj) },
+    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&robot_lcd_write_obj) },
+    { MP_ROM_QSTR(MP_QSTR_fill), MP_ROM_PTR(&robot_lcd_fill_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get), MP_ROM_PTR(&robot_lcd_get_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pixel), MP_ROM_PTR(&robot_lcd_pixel_obj) },
+    { MP_ROM_QSTR(MP_QSTR_text), MP_ROM_PTR(&robot_lcd_text_obj) },
+    { MP_ROM_QSTR(MP_QSTR_show), MP_ROM_PTR(&robot_lcd_show_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_lcd_locals_dict, pyb_lcd_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_lcd_locals_dict, robot_lcd_locals_dict_table);
 
-const mp_obj_type_t pyb_lcd_type = {
+const mp_obj_type_t robot_lcd_type = {
     { &mp_type_type },
     .name = MP_QSTR_LCD,
-    .make_new = pyb_lcd_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_lcd_locals_dict,
+    .make_new = robot_lcd_make_new,
+    .locals_dict = (mp_obj_dict_t*)&robot_lcd_locals_dict,
 };
 
 #endif // MICROPY_HW_HAS_LCD

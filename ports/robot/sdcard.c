@@ -387,14 +387,14 @@ mp_uint_t sdcard_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t n
 // Expose the SD card as an object with the block protocol.
 
 // there is a singleton SDCard object
-const mp_obj_base_t pyb_sdcard_obj = {&pyb_sdcard_type};
+const mp_obj_base_t robot_sdcard_obj = {&robot_sdcard_type};
 
-STATIC mp_obj_t pyb_sdcard_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_sdcard_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
 
     // return singleton object
-    return (mp_obj_t)&pyb_sdcard_obj;
+    return (mp_obj_t)&robot_sdcard_obj;
 }
 
 STATIC mp_obj_t sd_present(mp_obj_t self) {
@@ -462,23 +462,23 @@ STATIC mp_obj_t sd_write(mp_obj_t self, mp_obj_t block_num, mp_obj_t data) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(sd_write_obj, sd_write);
 
-STATIC mp_obj_t pyb_sdcard_readblocks(mp_obj_t self, mp_obj_t block_num, mp_obj_t buf) {
+STATIC mp_obj_t robot_sdcard_readblocks(mp_obj_t self, mp_obj_t block_num, mp_obj_t buf) {
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(buf, &bufinfo, MP_BUFFER_WRITE);
     mp_uint_t ret = sdcard_read_blocks(bufinfo.buf, mp_obj_get_int(block_num), bufinfo.len / SDCARD_BLOCK_SIZE);
     return mp_obj_new_bool(ret == 0);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sdcard_readblocks_obj, pyb_sdcard_readblocks);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(robot_sdcard_readblocks_obj, robot_sdcard_readblocks);
 
-STATIC mp_obj_t pyb_sdcard_writeblocks(mp_obj_t self, mp_obj_t block_num, mp_obj_t buf) {
+STATIC mp_obj_t robot_sdcard_writeblocks(mp_obj_t self, mp_obj_t block_num, mp_obj_t buf) {
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(buf, &bufinfo, MP_BUFFER_READ);
     mp_uint_t ret = sdcard_write_blocks(bufinfo.buf, mp_obj_get_int(block_num), bufinfo.len / SDCARD_BLOCK_SIZE);
     return mp_obj_new_bool(ret == 0);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sdcard_writeblocks_obj, pyb_sdcard_writeblocks);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(robot_sdcard_writeblocks_obj, robot_sdcard_writeblocks);
 
-STATIC mp_obj_t pyb_sdcard_ioctl(mp_obj_t self, mp_obj_t cmd_in, mp_obj_t arg_in) {
+STATIC mp_obj_t robot_sdcard_ioctl(mp_obj_t self, mp_obj_t cmd_in, mp_obj_t arg_in) {
     mp_int_t cmd = mp_obj_get_int(cmd_in);
     switch (cmd) {
         case BP_IOCTL_INIT:
@@ -505,27 +505,27 @@ STATIC mp_obj_t pyb_sdcard_ioctl(mp_obj_t self, mp_obj_t cmd_in, mp_obj_t arg_in
             return MP_OBJ_NEW_SMALL_INT(-1); // error
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sdcard_ioctl_obj, pyb_sdcard_ioctl);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(robot_sdcard_ioctl_obj, robot_sdcard_ioctl);
 
-STATIC const mp_rom_map_elem_t pyb_sdcard_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t robot_sdcard_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_present), MP_ROM_PTR(&sd_present_obj) },
     { MP_ROM_QSTR(MP_QSTR_power), MP_ROM_PTR(&sd_power_obj) },
     { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&sd_info_obj) },
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&sd_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&sd_write_obj) },
     // block device protocol
-    { MP_ROM_QSTR(MP_QSTR_readblocks), MP_ROM_PTR(&pyb_sdcard_readblocks_obj) },
-    { MP_ROM_QSTR(MP_QSTR_writeblocks), MP_ROM_PTR(&pyb_sdcard_writeblocks_obj) },
-    { MP_ROM_QSTR(MP_QSTR_ioctl), MP_ROM_PTR(&pyb_sdcard_ioctl_obj) },
+    { MP_ROM_QSTR(MP_QSTR_readblocks), MP_ROM_PTR(&robot_sdcard_readblocks_obj) },
+    { MP_ROM_QSTR(MP_QSTR_writeblocks), MP_ROM_PTR(&robot_sdcard_writeblocks_obj) },
+    { MP_ROM_QSTR(MP_QSTR_ioctl), MP_ROM_PTR(&robot_sdcard_ioctl_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_sdcard_locals_dict, pyb_sdcard_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_sdcard_locals_dict, robot_sdcard_locals_dict_table);
 
-const mp_obj_type_t pyb_sdcard_type = {
+const mp_obj_type_t robot_sdcard_type = {
     { &mp_type_type },
     .name = MP_QSTR_SDCard,
-    .make_new = pyb_sdcard_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_sdcard_locals_dict,
+    .make_new = robot_sdcard_make_new,
+    .locals_dict = (mp_obj_dict_t*)&robot_sdcard_locals_dict,
 };
 
 void sdcard_init_vfs(fs_user_mount_t *vfs, int part) {
@@ -533,14 +533,14 @@ void sdcard_init_vfs(fs_user_mount_t *vfs, int part) {
     vfs->flags |= FSUSER_NATIVE | FSUSER_HAVE_IOCTL;
     vfs->fatfs.drv = vfs;
     vfs->fatfs.part = part;
-    vfs->readblocks[0] = (mp_obj_t)&pyb_sdcard_readblocks_obj;
-    vfs->readblocks[1] = (mp_obj_t)&pyb_sdcard_obj;
+    vfs->readblocks[0] = (mp_obj_t)&robot_sdcard_readblocks_obj;
+    vfs->readblocks[1] = (mp_obj_t)&robot_sdcard_obj;
     vfs->readblocks[2] = (mp_obj_t)sdcard_read_blocks; // native version
-    vfs->writeblocks[0] = (mp_obj_t)&pyb_sdcard_writeblocks_obj;
-    vfs->writeblocks[1] = (mp_obj_t)&pyb_sdcard_obj;
+    vfs->writeblocks[0] = (mp_obj_t)&robot_sdcard_writeblocks_obj;
+    vfs->writeblocks[1] = (mp_obj_t)&robot_sdcard_obj;
     vfs->writeblocks[2] = (mp_obj_t)sdcard_write_blocks; // native version
-    vfs->u.ioctl[0] = (mp_obj_t)&pyb_sdcard_ioctl_obj;
-    vfs->u.ioctl[1] = (mp_obj_t)&pyb_sdcard_obj;
+    vfs->u.ioctl[0] = (mp_obj_t)&robot_sdcard_ioctl_obj;
+    vfs->u.ioctl[1] = (mp_obj_t)&robot_sdcard_obj;
 }
 
 #endif // MICROPY_HW_HAS_SDCARD

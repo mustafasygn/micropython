@@ -35,14 +35,14 @@
 
 #if MICROPY_HW_HAS_SWITCH
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class Switch - switch object
 ///
 /// A Switch object is used to control a push-button switch.
 ///
 /// Usage:
 ///
-///      sw = pyb.Switch()       # create a switch object
+///      sw = robot.Switch()       # create a switch object
 ///      sw()                    # get state (True if pressed, False otherwise)
 ///      sw.callback(f)          # register a callback to be called when the
 ///                              #   switch is pressed down
@@ -50,7 +50,7 @@
 ///
 /// Example:
 ///
-///      pyb.Switch().callback(lambda: pyb.LED(1).toggle())
+///      robot.Switch().callback(lambda: robot.LED(1).toggle())
 
 // this function inits the switch GPIO so that it can be used
 void switch_init0(void) {
@@ -65,19 +65,19 @@ int switch_get(void) {
 /******************************************************************************/
 // MicroPython bindings
 
-typedef struct _pyb_switch_obj_t {
+typedef struct _robot_switch_obj_t {
     mp_obj_base_t base;
-} pyb_switch_obj_t;
+} robot_switch_obj_t;
 
-STATIC const pyb_switch_obj_t pyb_switch_obj = {{&pyb_switch_type}};
+STATIC const robot_switch_obj_t robot_switch_obj = {{&robot_switch_type}};
 
-void pyb_switch_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+void robot_switch_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     mp_print_str(print, "Switch()");
 }
 
 /// \classmethod \constructor()
 /// Create and return a switch object.
-STATIC mp_obj_t pyb_switch_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_switch_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
 
@@ -86,26 +86,26 @@ STATIC mp_obj_t pyb_switch_make_new(const mp_obj_type_t *type, size_t n_args, si
     // then no extint will be called until it is set via the callback method.
 
     // return static switch object
-    return (mp_obj_t)&pyb_switch_obj;
+    return (mp_obj_t)&robot_switch_obj;
 }
 
 /// \method \call()
 /// Return the switch state: `True` if pressed down, `False` otherwise.
-mp_obj_t pyb_switch_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+mp_obj_t robot_switch_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // get switch state
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
     return switch_get() ? mp_const_true : mp_const_false;
 }
 
-mp_obj_t pyb_switch_value(mp_obj_t self_in) {
+mp_obj_t robot_switch_value(mp_obj_t self_in) {
     (void)self_in;
     return mp_obj_new_bool(switch_get());
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_switch_value_obj, pyb_switch_value);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_switch_value_obj, robot_switch_value);
 
 STATIC mp_obj_t switch_callback(mp_obj_t line) {
-    if (MP_STATE_PORT(pyb_switch_callback) != mp_const_none) {
-        mp_call_function_0(MP_STATE_PORT(pyb_switch_callback));
+    if (MP_STATE_PORT(robot_switch_callback) != mp_const_none) {
+        mp_call_function_0(MP_STATE_PORT(robot_switch_callback));
     }
     return mp_const_none;
 }
@@ -114,8 +114,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(switch_callback_obj, switch_callback);
 /// \method callback(fun)
 /// Register the given function to be called when the switch is pressed down.
 /// If `fun` is `None`, then it disables the callback.
-mp_obj_t pyb_switch_callback(mp_obj_t self_in, mp_obj_t callback) {
-    MP_STATE_PORT(pyb_switch_callback) = callback;
+mp_obj_t robot_switch_callback(mp_obj_t self_in, mp_obj_t callback) {
+    MP_STATE_PORT(robot_switch_callback) = callback;
     // Init the EXTI each time this function is called, since the EXTI
     // may have been disabled by an exception in the interrupt, or the
     // user disabling the line explicitly.
@@ -126,22 +126,22 @@ mp_obj_t pyb_switch_callback(mp_obj_t self_in, mp_obj_t callback) {
                     true);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_switch_callback_obj, pyb_switch_callback);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_switch_callback_obj, robot_switch_callback);
 
-STATIC const mp_rom_map_elem_t pyb_switch_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_value), MP_ROM_PTR(&pyb_switch_value_obj) },
-    { MP_ROM_QSTR(MP_QSTR_callback), MP_ROM_PTR(&pyb_switch_callback_obj) },
+STATIC const mp_rom_map_elem_t robot_switch_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_value), MP_ROM_PTR(&robot_switch_value_obj) },
+    { MP_ROM_QSTR(MP_QSTR_callback), MP_ROM_PTR(&robot_switch_callback_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_switch_locals_dict, pyb_switch_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_switch_locals_dict, robot_switch_locals_dict_table);
 
-const mp_obj_type_t pyb_switch_type = {
+const mp_obj_type_t robot_switch_type = {
     { &mp_type_type },
     .name = MP_QSTR_Switch,
-    .print = pyb_switch_print,
-    .make_new = pyb_switch_make_new,
-    .call = pyb_switch_call,
-    .locals_dict = (mp_obj_dict_t*)&pyb_switch_locals_dict,
+    .print = robot_switch_print,
+    .make_new = robot_switch_make_new,
+    .call = robot_switch_call,
+    .locals_dict = (mp_obj_dict_t*)&robot_switch_locals_dict,
 };
 
 #endif // MICROPY_HW_HAS_SWITCH

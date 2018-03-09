@@ -29,13 +29,13 @@
 #include "py/runtime.h"
 #include "wdt.h"
 
-typedef struct _pyb_wdt_obj_t {
+typedef struct _robot_wdt_obj_t {
     mp_obj_base_t base;
-} pyb_wdt_obj_t;
+} robot_wdt_obj_t;
 
-STATIC pyb_wdt_obj_t pyb_wdt = {{&pyb_wdt_type}};
+STATIC robot_wdt_obj_t robot_wdt = {{&robot_wdt_type}};
 
-STATIC mp_obj_t pyb_wdt_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
+STATIC mp_obj_t robot_wdt_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     // parse arguments
     enum { ARG_id, ARG_timeout };
     static const mp_arg_t allowed_args[] = {
@@ -82,25 +82,25 @@ STATIC mp_obj_t pyb_wdt_make_new(const mp_obj_type_t *type, size_t n_args, size_
     // start the watch dog
     IWDG->KR = 0xcccc;
 
-    return (mp_obj_t)&pyb_wdt;
+    return (mp_obj_t)&robot_wdt;
 }
 
-STATIC mp_obj_t pyb_wdt_feed(mp_obj_t self_in) {
+STATIC mp_obj_t robot_wdt_feed(mp_obj_t self_in) {
     (void)self_in;
     IWDG->KR = 0xaaaa;
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_wdt_feed_obj, pyb_wdt_feed);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_wdt_feed_obj, robot_wdt_feed);
 
-STATIC const mp_rom_map_elem_t pyb_wdt_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_feed), MP_ROM_PTR(&pyb_wdt_feed_obj) },
+STATIC const mp_rom_map_elem_t robot_wdt_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_feed), MP_ROM_PTR(&robot_wdt_feed_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_wdt_locals_dict, pyb_wdt_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_wdt_locals_dict, robot_wdt_locals_dict_table);
 
-const mp_obj_type_t pyb_wdt_type = {
+const mp_obj_type_t robot_wdt_type = {
     { &mp_type_type },
     .name = MP_QSTR_WDT,
-    .make_new = pyb_wdt_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_wdt_locals_dict,
+    .make_new = robot_wdt_make_new,
+    .locals_dict = (mp_obj_dict_t*)&robot_wdt_locals_dict,
 };

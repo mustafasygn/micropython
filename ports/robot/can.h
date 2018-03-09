@@ -29,7 +29,7 @@
 #define PYB_CAN_1 (1)
 #define PYB_CAN_2 (2)
 
-extern const mp_obj_type_t pyb_can_type;
+extern const mp_obj_type_t robot_can_type;
 
 void can_init0(void);
 void can_deinit(void);

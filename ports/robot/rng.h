@@ -29,6 +29,6 @@
 void rng_init0(void);
 uint32_t rng_get(void);
 
-MP_DECLARE_CONST_FUN_OBJ_0(pyb_rng_get_obj);
+MP_DECLARE_CONST_FUN_OBJ_0(robot_rng_get_obj);
 
 #endif // MICROPY_INCLUDED_STMHAL_RNG_H

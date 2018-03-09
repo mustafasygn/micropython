@@ -36,12 +36,12 @@
 
 #if MICROPY_HW_HAS_MMA7660
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class Accel - accelerometer control
 ///
 /// Accel is an object that controls the accelerometer.  Example usage:
 ///
-///     accel = pyb.Accel()
+///     accel = robot.Accel()
 ///     for i in range(10):
 ///         print(accel.x(), accel.y(), accel.z())
 ///
@@ -106,12 +106,12 @@ STATIC void accel_start(void) {
 #define NUM_AXIS (3)
 #define FILT_DEPTH (4)
 
-typedef struct _pyb_accel_obj_t {
+typedef struct _robot_accel_obj_t {
     mp_obj_base_t base;
     int16_t buf[NUM_AXIS * FILT_DEPTH];
-} pyb_accel_obj_t;
+} robot_accel_obj_t;
 
-STATIC pyb_accel_obj_t pyb_accel_obj;
+STATIC robot_accel_obj_t robot_accel_obj;
 
 /// \classmethod \constructor()
 /// Create and return an accelerometer object.
@@ -119,20 +119,20 @@ STATIC pyb_accel_obj_t pyb_accel_obj;
 /// Note: if you read accelerometer values immediately after creating this object
 /// you will get 0.  It takes around 20ms for the first sample to be ready, so,
 /// unless you have some other code between creating this object and reading its
-/// values, you should put a `pyb.delay(20)` after creating it.  For example:
+/// values, you should put a `robot.delay(20)` after creating it.  For example:
 ///
-///     accel = pyb.Accel()
-///     pyb.delay(20)
+///     accel = robot.Accel()
+///     robot.delay(20)
 ///     print(accel.x())
-STATIC mp_obj_t pyb_accel_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_accel_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
 
     // init accel object
-    pyb_accel_obj.base.type = &pyb_accel_type;
+    robot_accel_obj.base.type = &robot_accel_type;
     accel_start();
 
-    return &pyb_accel_obj;
+    return &robot_accel_obj;
 }
 
 STATIC mp_obj_t read_axis(int axis) {
@@ -143,38 +143,38 @@ STATIC mp_obj_t read_axis(int axis) {
 
 /// \method x()
 /// Get the x-axis value.
-STATIC mp_obj_t pyb_accel_x(mp_obj_t self_in) {
+STATIC mp_obj_t robot_accel_x(mp_obj_t self_in) {
     return read_axis(MMA_REG_X);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_accel_x_obj, pyb_accel_x);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_accel_x_obj, robot_accel_x);
 
 /// \method y()
 /// Get the y-axis value.
-STATIC mp_obj_t pyb_accel_y(mp_obj_t self_in) {
+STATIC mp_obj_t robot_accel_y(mp_obj_t self_in) {
     return read_axis(MMA_REG_Y);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_accel_y_obj, pyb_accel_y);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_accel_y_obj, robot_accel_y);
 
 /// \method z()
 /// Get the z-axis value.
-STATIC mp_obj_t pyb_accel_z(mp_obj_t self_in) {
+STATIC mp_obj_t robot_accel_z(mp_obj_t self_in) {
     return read_axis(MMA_REG_Z);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_accel_z_obj, pyb_accel_z);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_accel_z_obj, robot_accel_z);
 
 /// \method tilt()
 /// Get the tilt register.
-STATIC mp_obj_t pyb_accel_tilt(mp_obj_t self_in) {
+STATIC mp_obj_t robot_accel_tilt(mp_obj_t self_in) {
     uint8_t data[1];
     HAL_I2C_Mem_Read(&I2CHandle1, MMA_ADDR, MMA_REG_TILT, I2C_MEMADD_SIZE_8BIT, data, 1, 200);
     return mp_obj_new_int(data[0]);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_accel_tilt_obj, pyb_accel_tilt);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_accel_tilt_obj, robot_accel_tilt);
 
 /// \method filtered_xyz()
 /// Get a 3-tuple of filtered x, y and z values.
-STATIC mp_obj_t pyb_accel_filtered_xyz(mp_obj_t self_in) {
-    pyb_accel_obj_t *self = self_in;
+STATIC mp_obj_t robot_accel_filtered_xyz(mp_obj_t self_in) {
+    robot_accel_obj_t *self = self_in;
 
     memmove(self->buf, self->buf + NUM_AXIS, NUM_AXIS * (FILT_DEPTH - 1) * sizeof(int16_t));
 
@@ -193,41 +193,41 @@ STATIC mp_obj_t pyb_accel_filtered_xyz(mp_obj_t self_in) {
 
     return mp_obj_new_tuple(3, tuple);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_accel_filtered_xyz_obj, pyb_accel_filtered_xyz);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_accel_filtered_xyz_obj, robot_accel_filtered_xyz);
 
-STATIC mp_obj_t pyb_accel_read(mp_obj_t self_in, mp_obj_t reg) {
+STATIC mp_obj_t robot_accel_read(mp_obj_t self_in, mp_obj_t reg) {
     uint8_t data[1];
     HAL_I2C_Mem_Read(&I2CHandle1, MMA_ADDR, mp_obj_get_int(reg), I2C_MEMADD_SIZE_8BIT, data, 1, 200);
     return mp_obj_new_int(data[0]);
 }
-MP_DEFINE_CONST_FUN_OBJ_2(pyb_accel_read_obj, pyb_accel_read);
+MP_DEFINE_CONST_FUN_OBJ_2(robot_accel_read_obj, robot_accel_read);
 
-STATIC mp_obj_t pyb_accel_write(mp_obj_t self_in, mp_obj_t reg, mp_obj_t val) {
+STATIC mp_obj_t robot_accel_write(mp_obj_t self_in, mp_obj_t reg, mp_obj_t val) {
     uint8_t data[1];
     data[0] = mp_obj_get_int(val);
     HAL_I2C_Mem_Write(&I2CHandle1, MMA_ADDR, mp_obj_get_int(reg), I2C_MEMADD_SIZE_8BIT, data, 1, 200);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_3(pyb_accel_write_obj, pyb_accel_write);
+MP_DEFINE_CONST_FUN_OBJ_3(robot_accel_write_obj, robot_accel_write);
 
-STATIC const mp_rom_map_elem_t pyb_accel_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t robot_accel_locals_dict_table[] = {
     // TODO add init, deinit, and perhaps reset methods
-    { MP_ROM_QSTR(MP_QSTR_x), MP_ROM_PTR(&pyb_accel_x_obj) },
-    { MP_ROM_QSTR(MP_QSTR_y), MP_ROM_PTR(&pyb_accel_y_obj) },
-    { MP_ROM_QSTR(MP_QSTR_z), MP_ROM_PTR(&pyb_accel_z_obj) },
-    { MP_ROM_QSTR(MP_QSTR_tilt), MP_ROM_PTR(&pyb_accel_tilt_obj) },
-    { MP_ROM_QSTR(MP_QSTR_filtered_xyz), MP_ROM_PTR(&pyb_accel_filtered_xyz_obj) },
-    { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&pyb_accel_read_obj) },
-    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&pyb_accel_write_obj) },
+    { MP_ROM_QSTR(MP_QSTR_x), MP_ROM_PTR(&robot_accel_x_obj) },
+    { MP_ROM_QSTR(MP_QSTR_y), MP_ROM_PTR(&robot_accel_y_obj) },
+    { MP_ROM_QSTR(MP_QSTR_z), MP_ROM_PTR(&robot_accel_z_obj) },
+    { MP_ROM_QSTR(MP_QSTR_tilt), MP_ROM_PTR(&robot_accel_tilt_obj) },
+    { MP_ROM_QSTR(MP_QSTR_filtered_xyz), MP_ROM_PTR(&robot_accel_filtered_xyz_obj) },
+    { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&robot_accel_read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&robot_accel_write_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_accel_locals_dict, pyb_accel_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_accel_locals_dict, robot_accel_locals_dict_table);
 
-const mp_obj_type_t pyb_accel_type = {
+const mp_obj_type_t robot_accel_type = {
     { &mp_type_type },
     .name = MP_QSTR_Accel,
-    .make_new = pyb_accel_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_accel_locals_dict,
+    .make_new = robot_accel_make_new,
+    .locals_dict = (mp_obj_dict_t*)&robot_accel_locals_dict,
 };
 
 #endif // MICROPY_HW_HAS_MMA7660

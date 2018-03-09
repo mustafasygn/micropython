@@ -42,11 +42,11 @@ void mp_thread_init(void) {
 
 void mp_thread_gc_others(void) {
     mp_thread_mutex_lock(&thread_mutex, 1);
-    for (pyb_thread_t *th = pyb_thread_all; th != NULL; th = th->all_next) {
+    for (robot_thread_t *th = robot_thread_all; th != NULL; th = th->all_next) {
         gc_collect_root((void**)&th, 1);
         gc_collect_root(&th->arg, 1);
         gc_collect_root(&th->stack, 1);
-        if (th != pyb_thread_cur) {
+        if (th != robot_thread_cur) {
             gc_collect_root(th->stack, th->stack_len);
         }
     }
@@ -66,12 +66,12 @@ void mp_thread_create(void *(*entry)(void*), void *arg, size_t *stack_size) {
 
     // allocate stack and linked-list node (must be done outside thread_mutex lock)
     uint32_t *stack = m_new(uint32_t, stack_len);
-    pyb_thread_t *th = m_new_obj(pyb_thread_t);
+    robot_thread_t *th = m_new_obj(robot_thread_t);
 
     mp_thread_mutex_lock(&thread_mutex, 1);
 
     // create thread
-    uint32_t id = pyb_thread_new(th, stack, stack_len, entry, arg);
+    uint32_t id = robot_thread_new(th, stack, stack_len, entry, arg);
     if (id == 0) {
         mp_thread_mutex_unlock(&thread_mutex);
         nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "can't create thread"));

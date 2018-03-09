@@ -38,7 +38,7 @@
 
 #if MICROPY_HW_ENABLE_HW_I2C
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class I2C - a two-wire serial protocol
 ///
 /// I2C is a two-wire protocol for communicating between devices.  At the physical
@@ -47,7 +47,7 @@
 /// I2C objects are created attached to a specific bus.  They can be initialised
 /// when created, or initialised later on:
 ///
-///     from pyb import I2C
+///     from robot import I2C
 ///
 ///     i2c = I2C(1)                         # create on bus 1
 ///     i2c = I2C(1, I2C.MASTER)             # create and init as a master
@@ -102,28 +102,28 @@ I2C_HandleTypeDef I2CHandle3 = {.Instance = NULL};
 I2C_HandleTypeDef I2CHandle4 = {.Instance = NULL};
 #endif
 
-STATIC bool pyb_i2c_use_dma[4];
+STATIC bool robot_i2c_use_dma[4];
 
-const pyb_i2c_obj_t pyb_i2c_obj[] = {
+const robot_i2c_obj_t robot_i2c_obj[] = {
     #if defined(MICROPY_HW_I2C1_SCL)
-    {{&pyb_i2c_type}, &I2CHandle1, &dma_I2C_1_TX, &dma_I2C_1_RX, &pyb_i2c_use_dma[0]},
+    {{&robot_i2c_type}, &I2CHandle1, &dma_I2C_1_TX, &dma_I2C_1_RX, &robot_i2c_use_dma[0]},
     #else
-    {{&pyb_i2c_type}, NULL, NULL, NULL, NULL},
+    {{&robot_i2c_type}, NULL, NULL, NULL, NULL},
     #endif
     #if defined(MICROPY_HW_I2C2_SCL)
-    {{&pyb_i2c_type}, &I2CHandle2, &dma_I2C_2_TX, &dma_I2C_2_RX, &pyb_i2c_use_dma[1]},
+    {{&robot_i2c_type}, &I2CHandle2, &dma_I2C_2_TX, &dma_I2C_2_RX, &robot_i2c_use_dma[1]},
     #else
-    {{&pyb_i2c_type}, NULL, NULL, NULL, NULL},
+    {{&robot_i2c_type}, NULL, NULL, NULL, NULL},
     #endif
     #if defined(MICROPY_HW_I2C3_SCL)
-    {{&pyb_i2c_type}, &I2CHandle3, &dma_I2C_3_TX, &dma_I2C_3_RX, &pyb_i2c_use_dma[2]},
+    {{&robot_i2c_type}, &I2CHandle3, &dma_I2C_3_TX, &dma_I2C_3_RX, &robot_i2c_use_dma[2]},
     #else
-    {{&pyb_i2c_type}, NULL, NULL, NULL, NULL},
+    {{&robot_i2c_type}, NULL, NULL, NULL, NULL},
     #endif
     #if defined(MICROPY_HW_I2C4_SCL)
-    {{&pyb_i2c_type}, &I2CHandle4, &dma_I2C_4_TX, &dma_I2C_4_RX, &pyb_i2c_use_dma[3]},
+    {{&robot_i2c_type}, &I2CHandle4, &dma_I2C_4_TX, &dma_I2C_4_RX, &robot_i2c_use_dma[3]},
     #else
-    {{&pyb_i2c_type}, NULL, NULL, NULL, NULL},
+    {{&robot_i2c_type}, NULL, NULL, NULL, NULL},
     #endif
 };
 
@@ -172,14 +172,14 @@ const pyb_i2c_obj_t pyb_i2c_obj[] = {
 STATIC const struct {
     uint32_t    baudrate;
     uint32_t    timing;
-} pyb_i2c_baudrate_timing[] = MICROPY_HW_I2C_BAUDRATE_TIMING;
+} robot_i2c_baudrate_timing[] = MICROPY_HW_I2C_BAUDRATE_TIMING;
 
-#define NUM_BAUDRATE_TIMINGS MP_ARRAY_SIZE(pyb_i2c_baudrate_timing)
+#define NUM_BAUDRATE_TIMINGS MP_ARRAY_SIZE(robot_i2c_baudrate_timing)
 
 STATIC void i2c_set_baudrate(I2C_InitTypeDef *init, uint32_t baudrate) {
     for (int i = 0; i < NUM_BAUDRATE_TIMINGS; i++) {
-        if (pyb_i2c_baudrate_timing[i].baudrate == baudrate) {
-            init->Timing = pyb_i2c_baudrate_timing[i].timing;
+        if (robot_i2c_baudrate_timing[i].baudrate == baudrate) {
+            init->Timing = robot_i2c_baudrate_timing[i].timing;
             return;
         }
     }
@@ -189,8 +189,8 @@ STATIC void i2c_set_baudrate(I2C_InitTypeDef *init, uint32_t baudrate) {
 
 uint32_t i2c_get_baudrate(I2C_InitTypeDef *init) {
     for (int i = 0; i < NUM_BAUDRATE_TIMINGS; i++) {
-        if (pyb_i2c_baudrate_timing[i].timing == init->Timing) {
-            return pyb_i2c_baudrate_timing[i].baudrate;
+        if (robot_i2c_baudrate_timing[i].timing == init->Timing) {
+            return robot_i2c_baudrate_timing[i].baudrate;
         }
     }
     return 0;
@@ -287,7 +287,7 @@ void i2c_init(I2C_HandleTypeDef *i2c) {
     }
 
     // invalidate the DMA channels so they are initialised on first use
-    const pyb_i2c_obj_t *self = &pyb_i2c_obj[i2c_unit - 1];
+    const robot_i2c_obj_t *self = &robot_i2c_obj[i2c_unit - 1];
     dma_invalidate_channel(self->tx_dma_descr);
     dma_invalidate_channel(self->rx_dma_descr);
 
@@ -353,7 +353,7 @@ void i2c_deinit(I2C_HandleTypeDef *i2c) {
     }
 }
 
-void i2c_init_freq(const pyb_i2c_obj_t *self, mp_int_t freq) {
+void i2c_init_freq(const robot_i2c_obj_t *self, mp_int_t freq) {
     I2C_InitTypeDef *init = &self->i2c->Init;
 
     init->AddressingMode    = I2C_ADDRESSINGMODE_7BIT;
@@ -520,10 +520,10 @@ STATIC HAL_StatusTypeDef i2c_wait_dma_finished(I2C_HandleTypeDef *i2c, uint32_t 
 /******************************************************************************/
 /* MicroPython bindings                                                       */
 
-static inline bool in_master_mode(pyb_i2c_obj_t *self) { return self->i2c->Init.OwnAddress1 == PYB_I2C_MASTER_ADDRESS; }
+static inline bool in_master_mode(robot_i2c_obj_t *self) { return self->i2c->Init.OwnAddress1 == PYB_I2C_MASTER_ADDRESS; }
 
-STATIC void pyb_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    pyb_i2c_obj_t *self = self_in;
+STATIC void robot_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    robot_i2c_obj_t *self = self_in;
 
     uint i2c_num = 0;
     if (0) { }
@@ -559,7 +559,7 @@ STATIC void pyb_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
 ///   - `addr` is the 7-bit address (only sensible for a slave)
 ///   - `baudrate` is the SCL clock rate (only sensible for a master)
 ///   - `gencall` is whether to support general call mode
-STATIC mp_obj_t pyb_i2c_init_helper(const pyb_i2c_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_i2c_init_helper(const robot_i2c_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_mode,     MP_ARG_INT, {.u_int = PYB_I2C_MASTER} },
         { MP_QSTR_addr,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0x12} },
@@ -610,7 +610,7 @@ STATIC mp_obj_t pyb_i2c_init_helper(const pyb_i2c_obj_t *self, size_t n_args, co
 ///
 ///   - `I2C(1)` is on the X position: `(SCL, SDA) = (X9, X10) = (PB6, PB7)`
 ///   - `I2C(2)` is on the Y position: `(SCL, SDA) = (Y9, Y10) = (PB10, PB11)`
-STATIC mp_obj_t pyb_i2c_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_i2c_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 1, MP_OBJ_FUN_ARGS_MAX, true);
 
@@ -637,44 +637,44 @@ STATIC mp_obj_t pyb_i2c_make_new(const mp_obj_type_t *type, size_t n_args, size_
         }
     } else {
         i2c_id = mp_obj_get_int(args[0]);
-        if (i2c_id < 1 || i2c_id > MP_ARRAY_SIZE(pyb_i2c_obj)
-            || pyb_i2c_obj[i2c_id - 1].i2c == NULL) {
+        if (i2c_id < 1 || i2c_id > MP_ARRAY_SIZE(robot_i2c_obj)
+            || robot_i2c_obj[i2c_id - 1].i2c == NULL) {
             nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
                 "I2C(%d) doesn't exist", i2c_id));
         }
     }
 
     // get I2C object
-    const pyb_i2c_obj_t *i2c_obj = &pyb_i2c_obj[i2c_id - 1];
+    const robot_i2c_obj_t *i2c_obj = &robot_i2c_obj[i2c_id - 1];
 
     if (n_args > 1 || n_kw > 0) {
         // start the peripheral
         mp_map_t kw_args;
         mp_map_init_fixed_table(&kw_args, n_kw, args + n_args);
-        pyb_i2c_init_helper(i2c_obj, n_args - 1, args + 1, &kw_args);
+        robot_i2c_init_helper(i2c_obj, n_args - 1, args + 1, &kw_args);
     }
 
     return (mp_obj_t)i2c_obj;
 }
 
-STATIC mp_obj_t pyb_i2c_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
-    return pyb_i2c_init_helper(args[0], n_args - 1, args + 1, kw_args);
+STATIC mp_obj_t robot_i2c_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
+    return robot_i2c_init_helper(args[0], n_args - 1, args + 1, kw_args);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_i2c_init_obj, 1, pyb_i2c_init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_i2c_init_obj, 1, robot_i2c_init);
 
 /// \method deinit()
 /// Turn off the I2C bus.
-STATIC mp_obj_t pyb_i2c_deinit(mp_obj_t self_in) {
-    pyb_i2c_obj_t *self = self_in;
+STATIC mp_obj_t robot_i2c_deinit(mp_obj_t self_in) {
+    robot_i2c_obj_t *self = self_in;
     i2c_deinit(self->i2c);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_i2c_deinit_obj, pyb_i2c_deinit);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_i2c_deinit_obj, robot_i2c_deinit);
 
 /// \method is_ready(addr)
 /// Check if an I2C device responds to the given address.  Only valid when in master mode.
-STATIC mp_obj_t pyb_i2c_is_ready(mp_obj_t self_in, mp_obj_t i2c_addr_o) {
-    pyb_i2c_obj_t *self = self_in;
+STATIC mp_obj_t robot_i2c_is_ready(mp_obj_t self_in, mp_obj_t i2c_addr_o) {
+    robot_i2c_obj_t *self = self_in;
 
     if (!in_master_mode(self)) {
         mp_raise_TypeError("I2C must be a master");
@@ -691,13 +691,13 @@ STATIC mp_obj_t pyb_i2c_is_ready(mp_obj_t self_in, mp_obj_t i2c_addr_o) {
 
     return mp_const_false;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_i2c_is_ready_obj, pyb_i2c_is_ready);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_i2c_is_ready_obj, robot_i2c_is_ready);
 
 /// \method scan()
 /// Scan all I2C addresses from 0x08 to 0x77 and return a list of those that respond.
 /// Only valid when in master mode.
-STATIC mp_obj_t pyb_i2c_scan(mp_obj_t self_in) {
-    pyb_i2c_obj_t *self = self_in;
+STATIC mp_obj_t robot_i2c_scan(mp_obj_t self_in) {
+    robot_i2c_obj_t *self = self_in;
 
     if (!in_master_mode(self)) {
         mp_raise_TypeError("I2C must be a master");
@@ -714,7 +714,7 @@ STATIC mp_obj_t pyb_i2c_scan(mp_obj_t self_in) {
 
     return list;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_i2c_scan_obj, pyb_i2c_scan);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_i2c_scan_obj, robot_i2c_scan);
 
 /// \method send(send, addr=0x00, timeout=5000)
 /// Send data on the bus:
@@ -724,7 +724,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_i2c_scan_obj, pyb_i2c_scan);
 ///   - `timeout` is the timeout in milliseconds to wait for the send
 ///
 /// Return value: `None`.
-STATIC mp_obj_t pyb_i2c_send(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_i2c_send(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_send,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_addr,    MP_ARG_INT, {.u_int = PYB_I2C_MASTER_ADDRESS} },
@@ -732,14 +732,14 @@ STATIC mp_obj_t pyb_i2c_send(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     };
 
     // parse args
-    pyb_i2c_obj_t *self = pos_args[0];
+    robot_i2c_obj_t *self = pos_args[0];
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // get the buffer to send from
     mp_buffer_info_t bufinfo;
     uint8_t data[1];
-    pyb_buf_get_for_send(args[0].u_obj, &bufinfo, data);
+    robot_buf_get_for_send(args[0].u_obj, &bufinfo, data);
 
     // if option is set and IRQs are enabled then we can use DMA
     bool use_dma = *self->use_dma && query_irq() == IRQ_STATE_ENABLED;
@@ -791,7 +791,7 @@ STATIC mp_obj_t pyb_i2c_send(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_i2c_send_obj, 1, pyb_i2c_send);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_i2c_send_obj, 1, robot_i2c_send);
 
 /// \method recv(recv, addr=0x00, timeout=5000)
 ///
@@ -804,7 +804,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_i2c_send_obj, 1, pyb_i2c_send);
 ///
 /// Return value: if `recv` is an integer then a new buffer of the bytes received,
 /// otherwise the same buffer that was passed in to `recv`.
-STATIC mp_obj_t pyb_i2c_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_i2c_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_recv,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_addr,    MP_ARG_INT, {.u_int = PYB_I2C_MASTER_ADDRESS} },
@@ -812,13 +812,13 @@ STATIC mp_obj_t pyb_i2c_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     };
 
     // parse args
-    pyb_i2c_obj_t *self = pos_args[0];
+    robot_i2c_obj_t *self = pos_args[0];
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // get the buffer to receive into
     vstr_t vstr;
-    mp_obj_t o_ret = pyb_buf_get_for_recv(args[0].u_obj, &vstr);
+    mp_obj_t o_ret = robot_buf_get_for_recv(args[0].u_obj, &vstr);
 
     // if option is set and IRQs are enabled then we can use DMA
     bool use_dma = *self->use_dma && query_irq() == IRQ_STATE_ENABLED;
@@ -872,7 +872,7 @@ STATIC mp_obj_t pyb_i2c_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
         return mp_obj_new_str_from_vstr(&mp_type_bytes, &vstr);
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_i2c_recv_obj, 1, pyb_i2c_recv);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_i2c_recv_obj, 1, robot_i2c_recv);
 
 /// \method mem_read(data, addr, memaddr, timeout=5000, addr_size=8)
 ///
@@ -886,7 +886,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_i2c_recv_obj, 1, pyb_i2c_recv);
 ///
 /// Returns the read data.
 /// This is only valid in master mode.
-STATIC const mp_arg_t pyb_i2c_mem_read_allowed_args[] = {
+STATIC const mp_arg_t robot_i2c_mem_read_allowed_args[] = {
     { MP_QSTR_data,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
     { MP_QSTR_addr,    MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
     { MP_QSTR_memaddr, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
@@ -894,11 +894,11 @@ STATIC const mp_arg_t pyb_i2c_mem_read_allowed_args[] = {
     { MP_QSTR_addr_size, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 8} },
 };
 
-STATIC mp_obj_t pyb_i2c_mem_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_i2c_mem_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // parse args
-    pyb_i2c_obj_t *self = pos_args[0];
-    mp_arg_val_t args[MP_ARRAY_SIZE(pyb_i2c_mem_read_allowed_args)];
-    mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(pyb_i2c_mem_read_allowed_args), pyb_i2c_mem_read_allowed_args, args);
+    robot_i2c_obj_t *self = pos_args[0];
+    mp_arg_val_t args[MP_ARRAY_SIZE(robot_i2c_mem_read_allowed_args)];
+    mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(robot_i2c_mem_read_allowed_args), robot_i2c_mem_read_allowed_args, args);
 
     if (!in_master_mode(self)) {
         mp_raise_TypeError("I2C must be a master");
@@ -906,7 +906,7 @@ STATIC mp_obj_t pyb_i2c_mem_read(size_t n_args, const mp_obj_t *pos_args, mp_map
 
     // get the buffer to read into
     vstr_t vstr;
-    mp_obj_t o_ret = pyb_buf_get_for_recv(args[0].u_obj, &vstr);
+    mp_obj_t o_ret = robot_buf_get_for_recv(args[0].u_obj, &vstr);
 
     // get the addresses
     mp_uint_t i2c_addr = args[1].u_int << 1;
@@ -948,7 +948,7 @@ STATIC mp_obj_t pyb_i2c_mem_read(size_t n_args, const mp_obj_t *pos_args, mp_map
         return mp_obj_new_str_from_vstr(&mp_type_bytes, &vstr);
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_i2c_mem_read_obj, 1, pyb_i2c_mem_read);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_i2c_mem_read_obj, 1, robot_i2c_mem_read);
 
 /// \method mem_write(data, addr, memaddr, timeout=5000, addr_size=8)
 ///
@@ -962,11 +962,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_i2c_mem_read_obj, 1, pyb_i2c_mem_read);
 ///
 /// Returns `None`.
 /// This is only valid in master mode.
-STATIC mp_obj_t pyb_i2c_mem_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_i2c_mem_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // parse args (same as mem_read)
-    pyb_i2c_obj_t *self = pos_args[0];
-    mp_arg_val_t args[MP_ARRAY_SIZE(pyb_i2c_mem_read_allowed_args)];
-    mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(pyb_i2c_mem_read_allowed_args), pyb_i2c_mem_read_allowed_args, args);
+    robot_i2c_obj_t *self = pos_args[0];
+    mp_arg_val_t args[MP_ARRAY_SIZE(robot_i2c_mem_read_allowed_args)];
+    mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(robot_i2c_mem_read_allowed_args), robot_i2c_mem_read_allowed_args, args);
 
     if (!in_master_mode(self)) {
         mp_raise_TypeError("I2C must be a master");
@@ -975,7 +975,7 @@ STATIC mp_obj_t pyb_i2c_mem_write(size_t n_args, const mp_obj_t *pos_args, mp_ma
     // get the buffer to write from
     mp_buffer_info_t bufinfo;
     uint8_t data[1];
-    pyb_buf_get_for_send(args[0].u_obj, &bufinfo, data);
+    robot_buf_get_for_send(args[0].u_obj, &bufinfo, data);
 
     // get the addresses
     mp_uint_t i2c_addr = args[1].u_int << 1;
@@ -1012,18 +1012,18 @@ STATIC mp_obj_t pyb_i2c_mem_write(size_t n_args, const mp_obj_t *pos_args, mp_ma
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_i2c_mem_write_obj, 1, pyb_i2c_mem_write);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_i2c_mem_write_obj, 1, robot_i2c_mem_write);
 
-STATIC const mp_rom_map_elem_t pyb_i2c_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t robot_i2c_locals_dict_table[] = {
     // instance methods
-    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&pyb_i2c_init_obj) },
-    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&pyb_i2c_deinit_obj) },
-    { MP_ROM_QSTR(MP_QSTR_is_ready), MP_ROM_PTR(&pyb_i2c_is_ready_obj) },
-    { MP_ROM_QSTR(MP_QSTR_scan), MP_ROM_PTR(&pyb_i2c_scan_obj) },
-    { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&pyb_i2c_send_obj) },
-    { MP_ROM_QSTR(MP_QSTR_recv), MP_ROM_PTR(&pyb_i2c_recv_obj) },
-    { MP_ROM_QSTR(MP_QSTR_mem_read), MP_ROM_PTR(&pyb_i2c_mem_read_obj) },
-    { MP_ROM_QSTR(MP_QSTR_mem_write), MP_ROM_PTR(&pyb_i2c_mem_write_obj) },
+    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&robot_i2c_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&robot_i2c_deinit_obj) },
+    { MP_ROM_QSTR(MP_QSTR_is_ready), MP_ROM_PTR(&robot_i2c_is_ready_obj) },
+    { MP_ROM_QSTR(MP_QSTR_scan), MP_ROM_PTR(&robot_i2c_scan_obj) },
+    { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&robot_i2c_send_obj) },
+    { MP_ROM_QSTR(MP_QSTR_recv), MP_ROM_PTR(&robot_i2c_recv_obj) },
+    { MP_ROM_QSTR(MP_QSTR_mem_read), MP_ROM_PTR(&robot_i2c_mem_read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_mem_write), MP_ROM_PTR(&robot_i2c_mem_write_obj) },
 
     // class constants
     /// \constant MASTER - for initialising the bus to master mode
@@ -1032,14 +1032,14 @@ STATIC const mp_rom_map_elem_t pyb_i2c_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_SLAVE), MP_ROM_INT(PYB_I2C_SLAVE) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_i2c_locals_dict, pyb_i2c_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_i2c_locals_dict, robot_i2c_locals_dict_table);
 
-const mp_obj_type_t pyb_i2c_type = {
+const mp_obj_type_t robot_i2c_type = {
     { &mp_type_type },
     .name = MP_QSTR_I2C,
-    .print = pyb_i2c_print,
-    .make_new = pyb_i2c_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_i2c_locals_dict,
+    .print = robot_i2c_print,
+    .make_new = robot_i2c_make_new,
+    .locals_dict = (mp_obj_dict_t*)&robot_i2c_locals_dict,
 };
 
 #endif // MICROPY_HW_ENABLE_HW_I2C

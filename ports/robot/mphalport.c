@@ -25,8 +25,8 @@ int mp_hal_stdin_rx_chr(void) {
     for (;;) {
 #if 0
 #ifdef USE_HOST_MODE
-        pyb_usb_host_process();
-        int c = pyb_usb_host_get_keyboard();
+        robot_usb_host_process();
+        int c = robot_usb_host_get_keyboard();
         if (c != 0) {
             return c;
         }
@@ -36,8 +36,8 @@ int mp_hal_stdin_rx_chr(void) {
         byte c;
         if (usb_vcp_recv_byte(&c) != 0) {
             return c;
-        } else if (MP_STATE_PORT(pyb_stdio_uart) != NULL && uart_rx_any(MP_STATE_PORT(pyb_stdio_uart))) {
-            return uart_rx_char(MP_STATE_PORT(pyb_stdio_uart));
+        } else if (MP_STATE_PORT(robot_stdio_uart) != NULL && uart_rx_any(MP_STATE_PORT(robot_stdio_uart))) {
+            return uart_rx_char(MP_STATE_PORT(robot_stdio_uart));
         }
         int dupterm_c = mp_uos_dupterm_rx_chr();
         if (dupterm_c >= 0) {
@@ -52,8 +52,8 @@ void mp_hal_stdout_tx_str(const char *str) {
 }
 
 void mp_hal_stdout_tx_strn(const char *str, size_t len) {
-    if (MP_STATE_PORT(pyb_stdio_uart) != NULL) {
-        uart_tx_strn(MP_STATE_PORT(pyb_stdio_uart), str, len);
+    if (MP_STATE_PORT(robot_stdio_uart) != NULL) {
+        uart_tx_strn(MP_STATE_PORT(robot_stdio_uart), str, len);
     }
 #if 0 && defined(USE_HOST_MODE) && MICROPY_HW_HAS_LCD
     lcd_print_strn(str, len);

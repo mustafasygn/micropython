@@ -423,10 +423,10 @@ STATIC const cc3k_obj_t cc3k_obj = {{(mp_obj_type_t*)&mod_network_nic_type_cc3k}
 // Initialise the CC3000 using the given SPI bus and pins and return a CC3K object.
 //
 // Note: pins were originally hard-coded to:
-//      PYBv1.0: init(pyb.SPI(2), pyb.Pin.board.Y5, pyb.Pin.board.Y4, pyb.Pin.board.Y3)
+//      PYBv1.0: init(robot.SPI(2), robot.Pin.board.Y5, robot.Pin.board.Y4, robot.Pin.board.Y3)
 //        [SPI on Y position; Y6=B13=SCK, Y7=B14=MISO, Y8=B15=MOSI]
 //
-//      STM32F4DISC: init(pyb.SPI(2), pyb.Pin.cpu.A15, pyb.Pin.cpu.B10, pyb.Pin.cpu.B11)
+//      STM32F4DISC: init(robot.SPI(2), robot.Pin.cpu.A15, robot.Pin.cpu.B10, robot.Pin.cpu.B11)
 STATIC mp_obj_t cc3k_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 4, 4, false);

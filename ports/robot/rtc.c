@@ -30,7 +30,7 @@
 #include "rtc.h"
 #include "irq.h"
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class RTC - real time clock
 ///
 /// The RTC is and independent clock that keeps track of the date
@@ -38,7 +38,7 @@
 ///
 /// Example usage:
 ///
-///     rtc = pyb.RTC()
+///     rtc = robot.RTC()
 ///     rtc.datetime((2014, 5, 1, 4, 13, 0, 0, 0))
 ///     print(rtc.datetime())
 
@@ -414,29 +414,29 @@ STATIC void RTC_CalendarConfig(void) {
 /******************************************************************************/
 // MicroPython bindings
 
-typedef struct _pyb_rtc_obj_t {
+typedef struct _robot_rtc_obj_t {
     mp_obj_base_t base;
-} pyb_rtc_obj_t;
+} robot_rtc_obj_t;
 
-STATIC const pyb_rtc_obj_t pyb_rtc_obj = {{&pyb_rtc_type}};
+STATIC const robot_rtc_obj_t robot_rtc_obj = {{&robot_rtc_type}};
 
 /// \classmethod \constructor()
 /// Create an RTC object.
-STATIC mp_obj_t pyb_rtc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_rtc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
 
     // return constant object
-    return (mp_obj_t)&pyb_rtc_obj;
+    return (mp_obj_t)&robot_rtc_obj;
 }
 
 // force rtc to re-initialise
-mp_obj_t pyb_rtc_init(mp_obj_t self_in) {
+mp_obj_t robot_rtc_init(mp_obj_t self_in) {
     rtc_init_start(true);
     rtc_init_finalise();
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pyb_rtc_init_obj, pyb_rtc_init);
+MP_DEFINE_CONST_FUN_OBJ_1(robot_rtc_init_obj, robot_rtc_init);
 
 /// \method info()
 /// Get information about the startup time and reset source.
@@ -445,10 +445,10 @@ MP_DEFINE_CONST_FUN_OBJ_1(pyb_rtc_init_obj, pyb_rtc_init);
 ///    start up.
 ///  - Bit 0x10000 is set if a power-on reset occurred.
 ///  - Bit 0x20000 is set if an external reset occurred
-mp_obj_t pyb_rtc_info(mp_obj_t self_in) {
+mp_obj_t robot_rtc_info(mp_obj_t self_in) {
     return mp_obj_new_int(rtc_info);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pyb_rtc_info_obj, pyb_rtc_info);
+MP_DEFINE_CONST_FUN_OBJ_1(robot_rtc_info_obj, robot_rtc_info);
 
 /// \method datetime([datetimetuple])
 /// Get or set the date and time of the RTC.
@@ -481,7 +481,7 @@ uint32_t rtc_us_to_subsec(uint32_t us) {
 #define rtc_subsec_to_us
 #endif
 
-mp_obj_t pyb_rtc_datetime(size_t n_args, const mp_obj_t *args) {
+mp_obj_t robot_rtc_datetime(size_t n_args, const mp_obj_t *args) {
     rtc_init_finalise();
     if (n_args == 1) {
         // get date and time
@@ -526,12 +526,12 @@ mp_obj_t pyb_rtc_datetime(size_t n_args, const mp_obj_t *args) {
         return mp_const_none;
     }
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_datetime_obj, 1, 2, pyb_rtc_datetime);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robot_rtc_datetime_obj, 1, 2, robot_rtc_datetime);
 
 // wakeup(None)
 // wakeup(ms, callback=None)
 // wakeup(wucksel, wut, callback)
-mp_obj_t pyb_rtc_wakeup(size_t n_args, const mp_obj_t *args) {
+mp_obj_t robot_rtc_wakeup(size_t n_args, const mp_obj_t *args) {
     // wut is wakeup counter start value, wucksel is clock source
     // counter is decremented at wucksel rate, and wakes the MCU when it gets to 0
     // wucksel=0b000 is RTC/16 (RTC runs at 32768Hz)
@@ -597,7 +597,7 @@ mp_obj_t pyb_rtc_wakeup(size_t n_args, const mp_obj_t *args) {
     }
 
     // set the callback
-    MP_STATE_PORT(pyb_extint_callback)[22] = callback;
+    MP_STATE_PORT(robot_extint_callback)[22] = callback;
 
     // disable register write protection
     RTC->WPR = 0xca;
@@ -660,13 +660,13 @@ mp_obj_t pyb_rtc_wakeup(size_t n_args, const mp_obj_t *args) {
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_wakeup_obj, 2, 4, pyb_rtc_wakeup);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robot_rtc_wakeup_obj, 2, 4, robot_rtc_wakeup);
 
 // calibration(None)
 // calibration(cal)
 // When an integer argument is provided, check that it falls in the range [-511 to 512]
 // and set the calibration value; otherwise return calibration value
-mp_obj_t pyb_rtc_calibration(size_t n_args, const mp_obj_t *args) {
+mp_obj_t robot_rtc_calibration(size_t n_args, const mp_obj_t *args) {
     rtc_init_finalise();
     mp_int_t cal;
     if (n_args == 2) {
@@ -711,20 +711,20 @@ mp_obj_t pyb_rtc_calibration(size_t n_args, const mp_obj_t *args) {
         return mp_obj_new_int(cal);
     }
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_rtc_calibration_obj, 1, 2, pyb_rtc_calibration);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robot_rtc_calibration_obj, 1, 2, robot_rtc_calibration);
 
-STATIC const mp_rom_map_elem_t pyb_rtc_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&pyb_rtc_init_obj) },
-    { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&pyb_rtc_info_obj) },
-    { MP_ROM_QSTR(MP_QSTR_datetime), MP_ROM_PTR(&pyb_rtc_datetime_obj) },
-    { MP_ROM_QSTR(MP_QSTR_wakeup), MP_ROM_PTR(&pyb_rtc_wakeup_obj) },
-    { MP_ROM_QSTR(MP_QSTR_calibration), MP_ROM_PTR(&pyb_rtc_calibration_obj) },
+STATIC const mp_rom_map_elem_t robot_rtc_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&robot_rtc_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&robot_rtc_info_obj) },
+    { MP_ROM_QSTR(MP_QSTR_datetime), MP_ROM_PTR(&robot_rtc_datetime_obj) },
+    { MP_ROM_QSTR(MP_QSTR_wakeup), MP_ROM_PTR(&robot_rtc_wakeup_obj) },
+    { MP_ROM_QSTR(MP_QSTR_calibration), MP_ROM_PTR(&robot_rtc_calibration_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(pyb_rtc_locals_dict, pyb_rtc_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_rtc_locals_dict, robot_rtc_locals_dict_table);
 
-const mp_obj_type_t pyb_rtc_type = {
+const mp_obj_type_t robot_rtc_type = {
     { &mp_type_type },
     .name = MP_QSTR_RTC,
-    .make_new = pyb_rtc_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_rtc_locals_dict,
+    .make_new = robot_rtc_make_new,
+    .locals_dict = (mp_obj_dict_t*)&robot_rtc_locals_dict,
 };

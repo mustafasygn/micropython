@@ -35,7 +35,7 @@
 
 #if defined(MICROPY_HW_LED1)
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class LED - LED object
 ///
 /// The LED object controls an individual LED (Light Emitting Diode).
@@ -45,30 +45,30 @@
 #define MICROPY_HW_LED_INVERTED (0)
 #endif
 
-typedef struct _pyb_led_obj_t {
+typedef struct _robot_led_obj_t {
     mp_obj_base_t base;
     mp_uint_t led_id;
     const pin_obj_t *led_pin;
-} pyb_led_obj_t;
+} robot_led_obj_t;
 
-STATIC const pyb_led_obj_t pyb_led_obj[] = {
-    {{&pyb_led_type}, 1, &MICROPY_HW_LED1},
+STATIC const robot_led_obj_t robot_led_obj[] = {
+    {{&robot_led_type}, 1, &MICROPY_HW_LED1},
 #if defined(MICROPY_HW_LED2)
-    {{&pyb_led_type}, 2, &MICROPY_HW_LED2},
+    {{&robot_led_type}, 2, &MICROPY_HW_LED2},
 #if defined(MICROPY_HW_LED3)
-    {{&pyb_led_type}, 3, &MICROPY_HW_LED3},
+    {{&robot_led_type}, 3, &MICROPY_HW_LED3},
 #if defined(MICROPY_HW_LED4)
-    {{&pyb_led_type}, 4, &MICROPY_HW_LED4},
+    {{&robot_led_type}, 4, &MICROPY_HW_LED4},
 #endif
 #endif
 #endif
 };
-#define NUM_LEDS MP_ARRAY_SIZE(pyb_led_obj)
+#define NUM_LEDS MP_ARRAY_SIZE(robot_led_obj)
 
 void led_init(void) {
     /* Turn off LEDs and initialize */
     for (int led = 0; led < NUM_LEDS; led++) {
-        const pin_obj_t *led_pin = pyb_led_obj[led].led_pin;
+        const pin_obj_t *led_pin = robot_led_obj[led].led_pin;
         mp_hal_gpio_clock_enable(led_pin->gpio);
         MICROPY_HW_LED_OFF(led_pin);
         mp_hal_pin_output(led_pin);
@@ -128,7 +128,7 @@ static inline bool led_pwm_is_enabled(int led) {
 // this function has a large stack so it should not be inlined
 STATIC void led_pwm_init(int led) __attribute__((noinline));
 STATIC void led_pwm_init(int led) {
-    const pin_obj_t *led_pin = pyb_led_obj[led - 1].led_pin;
+    const pin_obj_t *led_pin = robot_led_obj[led - 1].led_pin;
     const led_pwm_config_t *pwm_cfg = &led_pwm_config[led - 1];
 
     // GPIO configuration
@@ -168,7 +168,7 @@ STATIC void led_pwm_init(int led) {
 
 STATIC void led_pwm_deinit(int led) {
     // make the LED's pin a standard GPIO output pin
-    const pin_obj_t *led_pin = pyb_led_obj[led - 1].led_pin;
+    const pin_obj_t *led_pin = robot_led_obj[led - 1].led_pin;
     GPIO_TypeDef *g = led_pin->gpio;
     uint32_t pin = led_pin->pin;
     static const int mode = 1; // output
@@ -182,12 +182,12 @@ STATIC void led_pwm_deinit(int led) {
 #define LED_PWM_ENABLED (0)
 #endif
 
-void led_state(pyb_led_t led, int state) {
+void led_state(robot_led_t led, int state) {
     if (led < 1 || led > NUM_LEDS) {
         return;
     }
 
-    const pin_obj_t *led_pin = pyb_led_obj[led - 1].led_pin;
+    const pin_obj_t *led_pin = robot_led_obj[led - 1].led_pin;
     //printf("led_state(%d,%d)\n", led, state);
     if (state == 0) {
         // turn LED off
@@ -204,7 +204,7 @@ void led_state(pyb_led_t led, int state) {
     #endif
 }
 
-void led_toggle(pyb_led_t led) {
+void led_toggle(robot_led_t led) {
     if (led < 1 || led > NUM_LEDS) {
         return;
     }
@@ -218,11 +218,11 @@ void led_toggle(pyb_led_t led) {
     #endif
 
     // toggle the output data register to toggle the LED state
-    const pin_obj_t *led_pin = pyb_led_obj[led - 1].led_pin;
+    const pin_obj_t *led_pin = robot_led_obj[led - 1].led_pin;
     led_pin->gpio->ODR ^= led_pin->pin_mask;
 }
 
-int led_get_intensity(pyb_led_t led) {
+int led_get_intensity(robot_led_t led) {
     if (led < 1 || led > NUM_LEDS) {
         return 0;
     }
@@ -238,7 +238,7 @@ int led_get_intensity(pyb_led_t led) {
     }
     #endif
 
-    const pin_obj_t *led_pin = pyb_led_obj[led - 1].led_pin;
+    const pin_obj_t *led_pin = robot_led_obj[led - 1].led_pin;
     GPIO_TypeDef *gpio = led_pin->gpio;
 
     if (gpio->ODR & led_pin->pin_mask) {
@@ -250,7 +250,7 @@ int led_get_intensity(pyb_led_t led) {
     }
 }
 
-void led_set_intensity(pyb_led_t led, mp_int_t intensity) {
+void led_set_intensity(robot_led_t led, mp_int_t intensity) {
     #if LED_PWM_ENABLED
     if (intensity > 0 && intensity < 255) {
         const led_pwm_config_t *pwm_cfg = &led_pwm_config[led - 1];
@@ -281,7 +281,7 @@ void led_debug(int n, int delay) {
 /* MicroPython bindings                                                       */
 
 void led_obj_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    pyb_led_obj_t *self = self_in;
+    robot_led_obj_t *self = self_in;
     mp_printf(print, "LED(%lu)", self->led_id);
 }
 
@@ -302,13 +302,13 @@ STATIC mp_obj_t led_obj_make_new(const mp_obj_type_t *type, size_t n_args, size_
     }
 
     // return static led object
-    return (mp_obj_t)&pyb_led_obj[led_id - 1];
+    return (mp_obj_t)&robot_led_obj[led_id - 1];
 }
 
 /// \method on()
 /// Turn the LED on.
 mp_obj_t led_obj_on(mp_obj_t self_in) {
-    pyb_led_obj_t *self = self_in;
+    robot_led_obj_t *self = self_in;
     led_state(self->led_id, 1);
     return mp_const_none;
 }
@@ -316,7 +316,7 @@ mp_obj_t led_obj_on(mp_obj_t self_in) {
 /// \method off()
 /// Turn the LED off.
 mp_obj_t led_obj_off(mp_obj_t self_in) {
-    pyb_led_obj_t *self = self_in;
+    robot_led_obj_t *self = self_in;
     led_state(self->led_id, 0);
     return mp_const_none;
 }
@@ -324,7 +324,7 @@ mp_obj_t led_obj_off(mp_obj_t self_in) {
 /// \method toggle()
 /// Toggle the LED between on and off.
 mp_obj_t led_obj_toggle(mp_obj_t self_in) {
-    pyb_led_obj_t *self = self_in;
+    robot_led_obj_t *self = self_in;
     led_toggle(self->led_id);
     return mp_const_none;
 }
@@ -334,7 +334,7 @@ mp_obj_t led_obj_toggle(mp_obj_t self_in) {
 /// If no argument is given, return the LED intensity.
 /// If an argument is given, set the LED intensity and return `None`.
 mp_obj_t led_obj_intensity(size_t n_args, const mp_obj_t *args) {
-    pyb_led_obj_t *self = args[0];
+    robot_led_obj_t *self = args[0];
     if (n_args == 1) {
         return mp_obj_new_int(led_get_intensity(self->led_id));
     } else {
@@ -357,7 +357,7 @@ STATIC const mp_rom_map_elem_t led_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(led_locals_dict, led_locals_dict_table);
 
-const mp_obj_type_t pyb_led_type = {
+const mp_obj_type_t robot_led_type = {
     { &mp_type_type },
     .name = MP_QSTR_LED,
     .print = led_obj_print,
@@ -370,8 +370,8 @@ const mp_obj_type_t pyb_led_type = {
 // have to put conditionals everywhere.
 void led_init(void) {
 }
-void led_state(pyb_led_t led, int state) {
+void led_state(robot_led_t led, int state) {
 }
-void led_toggle(pyb_led_t led) {
+void led_toggle(robot_led_t led) {
 }
 #endif  // defined(MICROPY_HW_LED1)

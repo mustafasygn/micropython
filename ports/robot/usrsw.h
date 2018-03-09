@@ -29,6 +29,6 @@
 void switch_init0(void);
 int switch_get(void);
 
-extern const mp_obj_type_t pyb_switch_type;
+extern const mp_obj_type_t robot_switch_type;
 
 #endif // MICROPY_INCLUDED_STMHAL_USRSW_H

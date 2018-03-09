@@ -108,7 +108,7 @@ void pendsv_isr_handler(void) {
         "cpsid i\n"                     // disable interrupts while we change stacks
         "mov r0, sp\n"                  // pass sp to save
         "mov r4, lr\n"                  // save lr because we are making a call
-        "bl pyb_thread_next\n"          // get next thread to execute
+        "bl robot_thread_next\n"          // get next thread to execute
         "mov lr, r4\n"                  // restore lr
         "mov sp, r0\n"                  // switch stacks
         "msr primask, r5\n"             // reenable interrupts

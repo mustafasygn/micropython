@@ -451,33 +451,33 @@ mp_uint_t storage_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t 
 // Expose the flash as an object with the block protocol.
 
 // there is a singleton Flash object
-STATIC const mp_obj_base_t pyb_flash_obj = {&pyb_flash_type};
+STATIC const mp_obj_base_t robot_flash_obj = {&robot_flash_type};
 
-STATIC mp_obj_t pyb_flash_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_flash_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
 
     // return singleton object
-    return (mp_obj_t)&pyb_flash_obj;
+    return (mp_obj_t)&robot_flash_obj;
 }
 
-STATIC mp_obj_t pyb_flash_readblocks(mp_obj_t self, mp_obj_t block_num, mp_obj_t buf) {
+STATIC mp_obj_t robot_flash_readblocks(mp_obj_t self, mp_obj_t block_num, mp_obj_t buf) {
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(buf, &bufinfo, MP_BUFFER_WRITE);
     mp_uint_t ret = storage_read_blocks(bufinfo.buf, mp_obj_get_int(block_num), bufinfo.len / FLASH_BLOCK_SIZE);
     return MP_OBJ_NEW_SMALL_INT(ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_flash_readblocks_obj, pyb_flash_readblocks);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(robot_flash_readblocks_obj, robot_flash_readblocks);
 
-STATIC mp_obj_t pyb_flash_writeblocks(mp_obj_t self, mp_obj_t block_num, mp_obj_t buf) {
+STATIC mp_obj_t robot_flash_writeblocks(mp_obj_t self, mp_obj_t block_num, mp_obj_t buf) {
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(buf, &bufinfo, MP_BUFFER_READ);
     mp_uint_t ret = storage_write_blocks(bufinfo.buf, mp_obj_get_int(block_num), bufinfo.len / FLASH_BLOCK_SIZE);
     return MP_OBJ_NEW_SMALL_INT(ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_flash_writeblocks_obj, pyb_flash_writeblocks);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(robot_flash_writeblocks_obj, robot_flash_writeblocks);
 
-STATIC mp_obj_t pyb_flash_ioctl(mp_obj_t self, mp_obj_t cmd_in, mp_obj_t arg_in) {
+STATIC mp_obj_t robot_flash_ioctl(mp_obj_t self, mp_obj_t cmd_in, mp_obj_t arg_in) {
     mp_int_t cmd = mp_obj_get_int(cmd_in);
     switch (cmd) {
         case BP_IOCTL_INIT: storage_init(); return MP_OBJ_NEW_SMALL_INT(0);
@@ -488,34 +488,34 @@ STATIC mp_obj_t pyb_flash_ioctl(mp_obj_t self, mp_obj_t cmd_in, mp_obj_t arg_in)
         default: return mp_const_none;
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_flash_ioctl_obj, pyb_flash_ioctl);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(robot_flash_ioctl_obj, robot_flash_ioctl);
 
-STATIC const mp_rom_map_elem_t pyb_flash_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_readblocks), MP_ROM_PTR(&pyb_flash_readblocks_obj) },
-    { MP_ROM_QSTR(MP_QSTR_writeblocks), MP_ROM_PTR(&pyb_flash_writeblocks_obj) },
-    { MP_ROM_QSTR(MP_QSTR_ioctl), MP_ROM_PTR(&pyb_flash_ioctl_obj) },
+STATIC const mp_rom_map_elem_t robot_flash_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_readblocks), MP_ROM_PTR(&robot_flash_readblocks_obj) },
+    { MP_ROM_QSTR(MP_QSTR_writeblocks), MP_ROM_PTR(&robot_flash_writeblocks_obj) },
+    { MP_ROM_QSTR(MP_QSTR_ioctl), MP_ROM_PTR(&robot_flash_ioctl_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_flash_locals_dict, pyb_flash_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_flash_locals_dict, robot_flash_locals_dict_table);
 
-const mp_obj_type_t pyb_flash_type = {
+const mp_obj_type_t robot_flash_type = {
     { &mp_type_type },
     .name = MP_QSTR_Flash,
-    .make_new = pyb_flash_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pyb_flash_locals_dict,
+    .make_new = robot_flash_make_new,
+    .locals_dict = (mp_obj_dict_t*)&robot_flash_locals_dict,
 };
 
-void pyb_flash_init_vfs(fs_user_mount_t *vfs) {
+void robot_flash_init_vfs(fs_user_mount_t *vfs) {
     vfs->base.type = &mp_fat_vfs_type;
     vfs->flags |= FSUSER_NATIVE | FSUSER_HAVE_IOCTL;
     vfs->fatfs.drv = vfs;
     vfs->fatfs.part = 1; // flash filesystem lives on first partition
-    vfs->readblocks[0] = (mp_obj_t)&pyb_flash_readblocks_obj;
-    vfs->readblocks[1] = (mp_obj_t)&pyb_flash_obj;
+    vfs->readblocks[0] = (mp_obj_t)&robot_flash_readblocks_obj;
+    vfs->readblocks[1] = (mp_obj_t)&robot_flash_obj;
     vfs->readblocks[2] = (mp_obj_t)storage_read_blocks; // native version
-    vfs->writeblocks[0] = (mp_obj_t)&pyb_flash_writeblocks_obj;
-    vfs->writeblocks[1] = (mp_obj_t)&pyb_flash_obj;
+    vfs->writeblocks[0] = (mp_obj_t)&robot_flash_writeblocks_obj;
+    vfs->writeblocks[1] = (mp_obj_t)&robot_flash_obj;
     vfs->writeblocks[2] = (mp_obj_t)storage_write_blocks; // native version
-    vfs->u.ioctl[0] = (mp_obj_t)&pyb_flash_ioctl_obj;
-    vfs->u.ioctl[1] = (mp_obj_t)&pyb_flash_obj;
+    vfs->u.ioctl[0] = (mp_obj_t)&robot_flash_ioctl_obj;
+    vfs->u.ioctl[1] = (mp_obj_t)&robot_flash_obj;
 }

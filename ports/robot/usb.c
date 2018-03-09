@@ -51,7 +51,7 @@
 #endif
 
 // this will be persistent across a soft-reset
-mp_uint_t pyb_usb_flags = 0;
+mp_uint_t robot_usb_flags = 0;
 
 typedef struct _usb_device_t {
     uint32_t enabled;
@@ -63,17 +63,17 @@ typedef struct _usb_device_t {
 
 #ifdef USE_DEVICE_MODE
 usb_device_t usb_device;
-pyb_usb_storage_medium_t pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_NONE;
+robot_usb_storage_medium_t robot_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_NONE;
 #endif
 
 // predefined hid mouse data
-STATIC const mp_obj_str_t pyb_usb_hid_mouse_desc_obj = {
+STATIC const mp_obj_str_t robot_usb_hid_mouse_desc_obj = {
     {&mp_type_bytes},
     0, // hash not valid
     USBD_HID_MOUSE_REPORT_DESC_SIZE,
     USBD_HID_MOUSE_ReportDesc,
 };
-const mp_obj_tuple_t pyb_usb_hid_mouse_obj = {
+const mp_obj_tuple_t robot_usb_hid_mouse_obj = {
     {&mp_type_tuple},
     5,
     {
@@ -81,18 +81,18 @@ const mp_obj_tuple_t pyb_usb_hid_mouse_obj = {
         MP_OBJ_NEW_SMALL_INT(2), // protocol: mouse
         MP_OBJ_NEW_SMALL_INT(USBD_HID_MOUSE_MAX_PACKET),
         MP_OBJ_NEW_SMALL_INT(8), // polling interval: 8ms
-        (mp_obj_t)&pyb_usb_hid_mouse_desc_obj,
+        (mp_obj_t)&robot_usb_hid_mouse_desc_obj,
     },
 };
 
 // predefined hid keyboard data
-STATIC const mp_obj_str_t pyb_usb_hid_keyboard_desc_obj = {
+STATIC const mp_obj_str_t robot_usb_hid_keyboard_desc_obj = {
     {&mp_type_bytes},
     0, // hash not valid
     USBD_HID_KEYBOARD_REPORT_DESC_SIZE,
     USBD_HID_KEYBOARD_ReportDesc,
 };
-const mp_obj_tuple_t pyb_usb_hid_keyboard_obj = {
+const mp_obj_tuple_t robot_usb_hid_keyboard_obj = {
     {&mp_type_tuple},
     5,
     {
@@ -100,16 +100,16 @@ const mp_obj_tuple_t pyb_usb_hid_keyboard_obj = {
         MP_OBJ_NEW_SMALL_INT(1), // protocol: keyboard
         MP_OBJ_NEW_SMALL_INT(USBD_HID_KEYBOARD_MAX_PACKET),
         MP_OBJ_NEW_SMALL_INT(8), // polling interval: 8ms
-        (mp_obj_t)&pyb_usb_hid_keyboard_desc_obj,
+        (mp_obj_t)&robot_usb_hid_keyboard_desc_obj,
     },
 };
 
-void pyb_usb_init0(void) {
+void robot_usb_init0(void) {
     mp_hal_set_interrupt_char(-1);
-    MP_STATE_PORT(pyb_hid_report_desc) = MP_OBJ_NULL;
+    MP_STATE_PORT(robot_hid_report_desc) = MP_OBJ_NULL;
 }
 
-bool pyb_usb_dev_init(uint16_t vid, uint16_t pid, usb_device_mode_t mode, USBD_HID_ModeInfoTypeDef *hid_info) {
+bool robot_usb_dev_init(uint16_t vid, uint16_t pid, usb_device_mode_t mode, USBD_HID_ModeInfoTypeDef *hid_info) {
 #ifdef USE_DEVICE_MODE
     usb_device_t *usb_dev = &usb_device;
     if (!usb_dev->enabled) {
@@ -132,7 +132,7 @@ bool pyb_usb_dev_init(uint16_t vid, uint16_t pid, usb_device_mode_t mode, USBD_H
         usb_dev->usbd_cdc_msc_hid_state.hid = &usb_dev->usbd_hid_itf;
         usbd->pClassData = &usb_dev->usbd_cdc_msc_hid_state;
 
-        switch (pyb_usb_storage_medium) {
+        switch (robot_usb_storage_medium) {
 #if MICROPY_HW_HAS_SDCARD
             case PYB_USB_STORAGE_MEDIUM_SDCARD:
                 USBD_MSC_RegisterStorage(&usb_dev->usbd_cdc_msc_hid_state, (USBD_StorageTypeDef*)&USBD_SDCARD_STORAGE_fops);
@@ -153,7 +153,7 @@ bool pyb_usb_dev_init(uint16_t vid, uint16_t pid, usb_device_mode_t mode, USBD_H
     return true;
 }
 
-void pyb_usb_dev_deinit(void) {
+void robot_usb_dev_deinit(void) {
     usb_device_t *usb_dev = &usb_device;
     if (usb_dev->enabled) {
         USBD_Stop(&usb_dev->hUSBDDevice);
@@ -181,40 +181,40 @@ void usb_vcp_send_strn(const char *str, int len) {
 // MicroPython bindings for USB
 
 /*
-  Philosophy of USB driver and Python API: pyb.usb_mode(...) configures the USB
+  Philosophy of USB driver and Python API: robot.usb_mode(...) configures the USB
   on the board.  The USB itself is not an entity, rather the interfaces are, and
-  can be accessed by creating objects, such as pyb.USB_VCP() and pyb.USB_HID().
+  can be accessed by creating objects, such as robot.USB_VCP() and robot.USB_HID().
 
   We have:
 
-    pyb.usb_mode()          # return the current usb mode
-    pyb.usb_mode(None)      # disable USB
-    pyb.usb_mode('VCP')     # enable with VCP interface
-    pyb.usb_mode('VCP+MSC') # enable with VCP and MSC interfaces
-    pyb.usb_mode('VCP+HID') # enable with VCP and HID, defaulting to mouse protocol
-    pyb.usb_mode('VCP+HID', vid=0xf055, pid=0x9800) # specify VID and PID
-    pyb.usb_mode('VCP+HID', hid=pyb.hid_mouse)
-    pyb.usb_mode('VCP+HID', hid=pyb.hid_keyboard)
-    pyb.usb_mode('VCP+HID', pid=0x1234, hid=(subclass, protocol, max_packet_len, polling_interval, report_desc))
+    robot.usb_mode()          # return the current usb mode
+    robot.usb_mode(None)      # disable USB
+    robot.usb_mode('VCP')     # enable with VCP interface
+    robot.usb_mode('VCP+MSC') # enable with VCP and MSC interfaces
+    robot.usb_mode('VCP+HID') # enable with VCP and HID, defaulting to mouse protocol
+    robot.usb_mode('VCP+HID', vid=0xf055, pid=0x9800) # specify VID and PID
+    robot.usb_mode('VCP+HID', hid=robot.hid_mouse)
+    robot.usb_mode('VCP+HID', hid=robot.hid_keyboard)
+    robot.usb_mode('VCP+HID', pid=0x1234, hid=(subclass, protocol, max_packet_len, polling_interval, report_desc))
 
-    vcp = pyb.USB_VCP() # get the VCP device for read/write
-    hid = pyb.USB_HID() # get the HID device for write/poll
+    vcp = robot.USB_VCP() # get the VCP device for read/write
+    hid = robot.USB_HID() # get the HID device for write/poll
 
   Possible extensions:
-    pyb.usb_mode('host', ...)
-    pyb.usb_mode('OTG', ...)
-    pyb.usb_mode(..., port=2) # for second USB port
+    robot.usb_mode('host', ...)
+    robot.usb_mode('OTG', ...)
+    robot.usb_mode(..., port=2) # for second USB port
 */
 
-STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = mp_const_none} },
         { MP_QSTR_vid, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = USBD_VID} },
         { MP_QSTR_pid, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
-        { MP_QSTR_hid, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = (mp_obj_t)&pyb_usb_hid_mouse_obj} },
+        { MP_QSTR_hid, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = (mp_obj_t)&robot_usb_hid_mouse_obj} },
     };
 
-    // fetch the current usb mode -> pyb.usb_mode()
+    // fetch the current usb mode -> robot.usb_mode()
     if (n_args == 0) {
     #if defined(USE_HOST_MODE)
         return MP_OBJ_NEW_QSTR(MP_QSTR_host);
@@ -244,13 +244,13 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // record the fact that the usb has been explicitly configured
-    pyb_usb_flags |= PYB_USB_FLAG_USB_MODE_CALLED;
+    robot_usb_flags |= PYB_USB_FLAG_USB_MODE_CALLED;
 
     // check if user wants to disable the USB
     if (args[0].u_obj == mp_const_none) {
         // disable usb
         #if defined(USE_DEVICE_MODE)
-        pyb_usb_dev_deinit();
+        robot_usb_dev_deinit();
         #endif
         return mp_const_none;
     }
@@ -263,7 +263,7 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     // hardware configured for USB host mode
 
     if (strcmp(mode_str, "host") == 0) {
-        pyb_usb_host_init();
+        robot_usb_host_init();
     } else {
         goto bad_mode;
     }
@@ -312,11 +312,11 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
         hid_info.report_desc_len = bufinfo.len;
 
         // need to keep a copy of this so report_desc does not get GC'd
-        MP_STATE_PORT(pyb_hid_report_desc) = items[4];
+        MP_STATE_PORT(robot_hid_report_desc) = items[4];
     }
 
     // init the USB device
-    if (!pyb_usb_dev_init(vid, pid, mode, &hid_info)) {
+    if (!robot_usb_dev_init(vid, pid, mode, &hid_info)) {
         goto bad_mode;
     }
 
@@ -330,70 +330,70 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
 bad_mode:
     mp_raise_ValueError("bad USB mode");
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(pyb_usb_mode_obj, 0, pyb_usb_mode);
+MP_DEFINE_CONST_FUN_OBJ_KW(robot_usb_mode_obj, 0, robot_usb_mode);
 
 /******************************************************************************/
 // MicroPython bindings for USB VCP
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class USB_VCP - USB virtual comm port
 ///
 /// The USB_VCP class allows creation of an object representing the USB
 /// virtual comm port.  It can be used to read and write data over USB to
 /// the connected host.
 
-typedef struct _pyb_usb_vcp_obj_t {
+typedef struct _robot_usb_vcp_obj_t {
     mp_obj_base_t base;
     usb_device_t *usb_dev;
-} pyb_usb_vcp_obj_t;
+} robot_usb_vcp_obj_t;
 
-STATIC const pyb_usb_vcp_obj_t pyb_usb_vcp_obj = {{&pyb_usb_vcp_type}, &usb_device};
+STATIC const robot_usb_vcp_obj_t robot_usb_vcp_obj = {{&robot_usb_vcp_type}, &usb_device};
 
-STATIC void pyb_usb_vcp_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+STATIC void robot_usb_vcp_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     mp_print_str(print, "USB_VCP()");
 }
 
 /// \classmethod \constructor()
 /// Create a new USB_VCP object.
-STATIC mp_obj_t pyb_usb_vcp_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_usb_vcp_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
 
     // TODO raise exception if USB is not configured for VCP
 
     // return the USB VCP object
-    return (mp_obj_t)&pyb_usb_vcp_obj;
+    return (mp_obj_t)&robot_usb_vcp_obj;
 }
 
-STATIC mp_obj_t pyb_usb_vcp_setinterrupt(mp_obj_t self_in, mp_obj_t int_chr_in) {
+STATIC mp_obj_t robot_usb_vcp_setinterrupt(mp_obj_t self_in, mp_obj_t int_chr_in) {
     mp_hal_set_interrupt_char(mp_obj_get_int(int_chr_in));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_usb_vcp_setinterrupt_obj, pyb_usb_vcp_setinterrupt);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_usb_vcp_setinterrupt_obj, robot_usb_vcp_setinterrupt);
 
-STATIC mp_obj_t pyb_usb_vcp_isconnected(mp_obj_t self_in) {
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t robot_usb_vcp_isconnected(mp_obj_t self_in) {
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_bool(usbd_cdc_is_connected(&self->usb_dev->usbd_cdc_itf));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_usb_vcp_isconnected_obj, pyb_usb_vcp_isconnected);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_usb_vcp_isconnected_obj, robot_usb_vcp_isconnected);
 
 // deprecated in favour of USB_VCP.isconnected
-STATIC mp_obj_t pyb_have_cdc(void) {
-    return pyb_usb_vcp_isconnected(MP_OBJ_NULL);
+STATIC mp_obj_t robot_have_cdc(void) {
+    return robot_usb_vcp_isconnected(MP_OBJ_NULL);
 }
-MP_DEFINE_CONST_FUN_OBJ_0(pyb_have_cdc_obj, pyb_have_cdc);
+MP_DEFINE_CONST_FUN_OBJ_0(robot_have_cdc_obj, robot_have_cdc);
 
 /// \method any()
 /// Return `True` if any characters waiting, else `False`.
-STATIC mp_obj_t pyb_usb_vcp_any(mp_obj_t self_in) {
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t robot_usb_vcp_any(mp_obj_t self_in) {
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (usbd_cdc_rx_num(&self->usb_dev->usbd_cdc_itf) > 0) {
         return mp_const_true;
     } else {
         return mp_const_false;
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_usb_vcp_any_obj, pyb_usb_vcp_any);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_usb_vcp_any_obj, robot_usb_vcp_any);
 
 /// \method send(data, *, timeout=5000)
 /// Send data over the USB VCP:
@@ -402,29 +402,29 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_usb_vcp_any_obj, pyb_usb_vcp_any);
 ///   - `timeout` is the timeout in milliseconds to wait for the send.
 ///
 /// Return value: number of bytes sent.
-STATIC const mp_arg_t pyb_usb_vcp_send_args[] = {
+STATIC const mp_arg_t robot_usb_vcp_send_args[] = {
     { MP_QSTR_data,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
     { MP_QSTR_timeout, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 5000} },
 };
-#define PYB_USB_VCP_SEND_NUM_ARGS MP_ARRAY_SIZE(pyb_usb_vcp_send_args)
+#define PYB_USB_VCP_SEND_NUM_ARGS MP_ARRAY_SIZE(robot_usb_vcp_send_args)
 
-STATIC mp_obj_t pyb_usb_vcp_send(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_usb_vcp_send(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     // parse args
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     mp_arg_val_t vals[PYB_USB_VCP_SEND_NUM_ARGS];
-    mp_arg_parse_all(n_args - 1, args + 1, kw_args, PYB_USB_VCP_SEND_NUM_ARGS, pyb_usb_vcp_send_args, vals);
+    mp_arg_parse_all(n_args - 1, args + 1, kw_args, PYB_USB_VCP_SEND_NUM_ARGS, robot_usb_vcp_send_args, vals);
 
     // get the buffer to send from
     mp_buffer_info_t bufinfo;
     uint8_t data[1];
-    pyb_buf_get_for_send(vals[0].u_obj, &bufinfo, data);
+    robot_buf_get_for_send(vals[0].u_obj, &bufinfo, data);
 
     // send the data
     int ret = usbd_cdc_tx(&self->usb_dev->usbd_cdc_itf, bufinfo.buf, bufinfo.len, vals[1].u_int);
 
     return mp_obj_new_int(ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_usb_vcp_send_obj, 1, pyb_usb_vcp_send);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_usb_vcp_send_obj, 1, robot_usb_vcp_send);
 
 /// \method recv(data, *, timeout=5000)
 ///
@@ -436,15 +436,15 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_usb_vcp_send_obj, 1, pyb_usb_vcp_send);
 ///
 /// Return value: if `data` is an integer then a new buffer of the bytes received,
 /// otherwise the number of bytes read into `data` is returned.
-STATIC mp_obj_t pyb_usb_vcp_recv(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_usb_vcp_recv(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     // parse args
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     mp_arg_val_t vals[PYB_USB_VCP_SEND_NUM_ARGS];
-    mp_arg_parse_all(n_args - 1, args + 1, kw_args, PYB_USB_VCP_SEND_NUM_ARGS, pyb_usb_vcp_send_args, vals);
+    mp_arg_parse_all(n_args - 1, args + 1, kw_args, PYB_USB_VCP_SEND_NUM_ARGS, robot_usb_vcp_send_args, vals);
 
     // get the buffer to receive into
     vstr_t vstr;
-    mp_obj_t o_ret = pyb_buf_get_for_recv(vals[0].u_obj, &vstr);
+    mp_obj_t o_ret = robot_buf_get_for_recv(vals[0].u_obj, &vstr);
 
     // receive the data
     int ret = usbd_cdc_rx(&self->usb_dev->usbd_cdc_itf, (uint8_t*)vstr.buf, vstr.len, vals[1].u_int);
@@ -457,19 +457,19 @@ STATIC mp_obj_t pyb_usb_vcp_recv(size_t n_args, const mp_obj_t *args, mp_map_t *
         return mp_obj_new_str_from_vstr(&mp_type_bytes, &vstr); // create a new buffer
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_usb_vcp_recv_obj, 1, pyb_usb_vcp_recv);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_usb_vcp_recv_obj, 1, robot_usb_vcp_recv);
 
-mp_obj_t pyb_usb_vcp___exit__(size_t n_args, const mp_obj_t *args) {
+mp_obj_t robot_usb_vcp___exit__(size_t n_args, const mp_obj_t *args) {
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_usb_vcp___exit___obj, 4, 4, pyb_usb_vcp___exit__);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robot_usb_vcp___exit___obj, 4, 4, robot_usb_vcp___exit__);
 
-STATIC const mp_rom_map_elem_t pyb_usb_vcp_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_setinterrupt), MP_ROM_PTR(&pyb_usb_vcp_setinterrupt_obj) },
-    { MP_ROM_QSTR(MP_QSTR_isconnected), MP_ROM_PTR(&pyb_usb_vcp_isconnected_obj) },
-    { MP_ROM_QSTR(MP_QSTR_any), MP_ROM_PTR(&pyb_usb_vcp_any_obj) },
-    { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&pyb_usb_vcp_send_obj) },
-    { MP_ROM_QSTR(MP_QSTR_recv), MP_ROM_PTR(&pyb_usb_vcp_recv_obj) },
+STATIC const mp_rom_map_elem_t robot_usb_vcp_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_setinterrupt), MP_ROM_PTR(&robot_usb_vcp_setinterrupt_obj) },
+    { MP_ROM_QSTR(MP_QSTR_isconnected), MP_ROM_PTR(&robot_usb_vcp_isconnected_obj) },
+    { MP_ROM_QSTR(MP_QSTR_any), MP_ROM_PTR(&robot_usb_vcp_any_obj) },
+    { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&robot_usb_vcp_send_obj) },
+    { MP_ROM_QSTR(MP_QSTR_recv), MP_ROM_PTR(&robot_usb_vcp_recv_obj) },
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&mp_stream_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_readinto), MP_ROM_PTR(&mp_stream_readinto_obj) },
     { MP_ROM_QSTR(MP_QSTR_readline), MP_ROM_PTR(&mp_stream_unbuffered_readline_obj)},
@@ -478,13 +478,13 @@ STATIC const mp_rom_map_elem_t pyb_usb_vcp_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&mp_identity_obj) },
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&mp_identity_obj) },
     { MP_ROM_QSTR(MP_QSTR___enter__), MP_ROM_PTR(&mp_identity_obj) },
-    { MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&pyb_usb_vcp___exit___obj) },
+    { MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&robot_usb_vcp___exit___obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_usb_vcp_locals_dict, pyb_usb_vcp_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_usb_vcp_locals_dict, robot_usb_vcp_locals_dict_table);
 
-STATIC mp_uint_t pyb_usb_vcp_read(mp_obj_t self_in, void *buf, mp_uint_t size, int *errcode) {
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_uint_t robot_usb_vcp_read(mp_obj_t self_in, void *buf, mp_uint_t size, int *errcode) {
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int ret = usbd_cdc_rx(&self->usb_dev->usbd_cdc_itf, (byte*)buf, size, 0);
     if (ret == 0) {
         // return EAGAIN error to indicate non-blocking
@@ -494,8 +494,8 @@ STATIC mp_uint_t pyb_usb_vcp_read(mp_obj_t self_in, void *buf, mp_uint_t size, i
     return ret;
 }
 
-STATIC mp_uint_t pyb_usb_vcp_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_uint_t robot_usb_vcp_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int ret = usbd_cdc_tx(&self->usb_dev->usbd_cdc_itf, (const byte*)buf, size, 0);
     if (ret == 0) {
         // return EAGAIN error to indicate non-blocking
@@ -505,9 +505,9 @@ STATIC mp_uint_t pyb_usb_vcp_write(mp_obj_t self_in, const void *buf, mp_uint_t 
     return ret;
 }
 
-STATIC mp_uint_t pyb_usb_vcp_ioctl(mp_obj_t self_in, mp_uint_t request, mp_uint_t arg, int *errcode) {
+STATIC mp_uint_t robot_usb_vcp_ioctl(mp_obj_t self_in, mp_uint_t request, mp_uint_t arg, int *errcode) {
     mp_uint_t ret;
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (request == MP_STREAM_POLL) {
         mp_uint_t flags = arg;
         ret = 0;
@@ -524,41 +524,41 @@ STATIC mp_uint_t pyb_usb_vcp_ioctl(mp_obj_t self_in, mp_uint_t request, mp_uint_
     return ret;
 }
 
-STATIC const mp_stream_p_t pyb_usb_vcp_stream_p = {
-    .read = pyb_usb_vcp_read,
-    .write = pyb_usb_vcp_write,
-    .ioctl = pyb_usb_vcp_ioctl,
+STATIC const mp_stream_p_t robot_usb_vcp_stream_p = {
+    .read = robot_usb_vcp_read,
+    .write = robot_usb_vcp_write,
+    .ioctl = robot_usb_vcp_ioctl,
 };
 
-const mp_obj_type_t pyb_usb_vcp_type = {
+const mp_obj_type_t robot_usb_vcp_type = {
     { &mp_type_type },
     .name = MP_QSTR_USB_VCP,
-    .print = pyb_usb_vcp_print,
-    .make_new = pyb_usb_vcp_make_new,
+    .print = robot_usb_vcp_print,
+    .make_new = robot_usb_vcp_make_new,
     .getiter = mp_identity_getiter,
     .iternext = mp_stream_unbuffered_iter,
-    .protocol = &pyb_usb_vcp_stream_p,
-    .locals_dict = (mp_obj_dict_t*)&pyb_usb_vcp_locals_dict,
+    .protocol = &robot_usb_vcp_stream_p,
+    .locals_dict = (mp_obj_dict_t*)&robot_usb_vcp_locals_dict,
 };
 
 /******************************************************************************/
 // MicroPython bindings for USB HID
 
-typedef struct _pyb_usb_hid_obj_t {
+typedef struct _robot_usb_hid_obj_t {
     mp_obj_base_t base;
     usb_device_t *usb_dev;
-} pyb_usb_hid_obj_t;
+} robot_usb_hid_obj_t;
 
-STATIC const pyb_usb_hid_obj_t pyb_usb_hid_obj = {{&pyb_usb_hid_type}, &usb_device};
+STATIC const robot_usb_hid_obj_t robot_usb_hid_obj = {{&robot_usb_hid_type}, &usb_device};
 
-STATIC mp_obj_t pyb_usb_hid_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_usb_hid_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
 
     // TODO raise exception if USB is not configured for HID
 
     // return the USB HID object
-    return (mp_obj_t)&pyb_usb_hid_obj;
+    return (mp_obj_t)&robot_usb_hid_obj;
 }
 
 /// \method recv(data, *, timeout=5000)
@@ -571,20 +571,20 @@ STATIC mp_obj_t pyb_usb_hid_make_new(const mp_obj_type_t *type, size_t n_args, s
 ///
 /// Return value: if `data` is an integer then a new buffer of the bytes received,
 /// otherwise the number of bytes read into `data` is returned.
-STATIC mp_obj_t pyb_usb_hid_recv(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_usb_hid_recv(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_data,    MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_timeout, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 5000} },
     };
 
     // parse args
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     mp_arg_val_t vals[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args - 1, args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, vals);
 
     // get the buffer to receive into
     vstr_t vstr;
-    mp_obj_t o_ret = pyb_buf_get_for_recv(vals[0].u_obj, &vstr);
+    mp_obj_t o_ret = robot_buf_get_for_recv(vals[0].u_obj, &vstr);
 
     // receive the data
     int ret = usbd_hid_rx(&self->usb_dev->usbd_hid_itf, vstr.len, (uint8_t*)vstr.buf, vals[1].u_int);
@@ -597,11 +597,11 @@ STATIC mp_obj_t pyb_usb_hid_recv(size_t n_args, const mp_obj_t *args, mp_map_t *
         return mp_obj_new_str_from_vstr(&mp_type_bytes, &vstr); // create a new buffer
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_usb_hid_recv_obj, 1, pyb_usb_hid_recv);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_usb_hid_recv_obj, 1, robot_usb_hid_recv);
 
-STATIC mp_obj_t pyb_usb_hid_send(mp_obj_t self_in, mp_obj_t report_in) {
+STATIC mp_obj_t robot_usb_hid_send(mp_obj_t self_in, mp_obj_t report_in) {
 #ifdef USE_DEVICE_MODE
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_buffer_info_t bufinfo;
     byte temp_buf[8];
     // get the buffer to send from
@@ -628,23 +628,23 @@ STATIC mp_obj_t pyb_usb_hid_send(mp_obj_t self_in, mp_obj_t report_in) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pyb_usb_hid_send_obj, pyb_usb_hid_send);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(robot_usb_hid_send_obj, robot_usb_hid_send);
 
 // deprecated in favour of USB_HID.send
-STATIC mp_obj_t pyb_hid_send_report(mp_obj_t arg) {
-    return pyb_usb_hid_send(MP_OBJ_FROM_PTR(&pyb_usb_hid_obj), arg);
+STATIC mp_obj_t robot_hid_send_report(mp_obj_t arg) {
+    return robot_usb_hid_send(MP_OBJ_FROM_PTR(&robot_usb_hid_obj), arg);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pyb_hid_send_report_obj, pyb_hid_send_report);
+MP_DEFINE_CONST_FUN_OBJ_1(robot_hid_send_report_obj, robot_hid_send_report);
 
-STATIC const mp_rom_map_elem_t pyb_usb_hid_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&pyb_usb_hid_send_obj) },
-    { MP_ROM_QSTR(MP_QSTR_recv), MP_ROM_PTR(&pyb_usb_hid_recv_obj) },
+STATIC const mp_rom_map_elem_t robot_usb_hid_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&robot_usb_hid_send_obj) },
+    { MP_ROM_QSTR(MP_QSTR_recv), MP_ROM_PTR(&robot_usb_hid_recv_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_usb_hid_locals_dict, pyb_usb_hid_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_usb_hid_locals_dict, robot_usb_hid_locals_dict_table);
 
-STATIC mp_uint_t pyb_usb_hid_ioctl(mp_obj_t self_in, mp_uint_t request, mp_uint_t arg, int *errcode) {
-    pyb_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_uint_t robot_usb_hid_ioctl(mp_obj_t self_in, mp_uint_t request, mp_uint_t arg, int *errcode) {
+    robot_usb_vcp_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_uint_t ret;
     if (request == MP_STREAM_POLL) {
         mp_uint_t flags = arg;
@@ -662,16 +662,16 @@ STATIC mp_uint_t pyb_usb_hid_ioctl(mp_obj_t self_in, mp_uint_t request, mp_uint_
     return ret;
 }
 
-STATIC const mp_stream_p_t pyb_usb_hid_stream_p = {
-    .ioctl = pyb_usb_hid_ioctl,
+STATIC const mp_stream_p_t robot_usb_hid_stream_p = {
+    .ioctl = robot_usb_hid_ioctl,
 };
 
-const mp_obj_type_t pyb_usb_hid_type = {
+const mp_obj_type_t robot_usb_hid_type = {
     { &mp_type_type },
     .name = MP_QSTR_USB_HID,
-    .make_new = pyb_usb_hid_make_new,
-    .protocol = &pyb_usb_hid_stream_p,
-    .locals_dict = (mp_obj_dict_t*)&pyb_usb_hid_locals_dict,
+    .make_new = robot_usb_hid_make_new,
+    .protocol = &robot_usb_hid_stream_p,
+    .locals_dict = (mp_obj_dict_t*)&robot_usb_hid_locals_dict,
 };
 
 /******************************************************************************/
@@ -690,7 +690,7 @@ __ALIGN_BEGIN USBH_HOST USB_Host __ALIGN_END ;
 
 static int host_is_enabled = 0;
 
-void pyb_usb_host_init(void) {
+void robot_usb_host_init(void) {
     if (!host_is_enabled) {
         // only init USBH once in the device's power-lifetime
         /* Init Host Library */
@@ -699,14 +699,14 @@ void pyb_usb_host_init(void) {
     host_is_enabled = 1;
 }
 
-void pyb_usb_host_process(void) {
+void robot_usb_host_process(void) {
     USBH_Process(&USB_OTG_Core, &USB_Host);
 }
 
 uint8_t usb_keyboard_key = 0;
 
 // TODO this is an ugly hack to get key presses
-uint pyb_usb_host_get_keyboard(void) {
+uint robot_usb_host_get_keyboard(void) {
     uint key = usb_keyboard_key;
     usb_keyboard_key = 0;
     return key;

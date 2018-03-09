@@ -5,9 +5,9 @@ This directory contains the port of MicroPython to ST's line of STM32Fxxx
 microcontrollers.  It is based on the STM32Cube HAL library and currently
 supports: STM32F401, STM32F405, STM32F411, STM32F429, STM32F746.
 
-The officially supported boards are the line of pyboards: PYBv1.0 and PYBv1.1
+The officially supported boards are the line of robotoards: PYBv1.0 and PYBv1.1
 (both with STM32F405), and PYBLITEv1.0 (with STM32F411).  See
-[micropython.org/pyboard](http://www.micropython.org/pyboard/) for further
+[micropython.org/robotoard](http://www.micropython.org/robotoard/) for further
 details.
 
 Other boards that are supported include ST Discovery and Nucleo boards.
@@ -43,7 +43,7 @@ The default board is PYBV10 but any of the names of the subdirectories in the
 should produce binary images in the `build-PYBV11/` subdirectory (or the
 equivalent directory for the board specified).
 
-You must then get your board/microcontroller into DFU mode.  On the pyboard
+You must then get your board/microcontroller into DFU mode.  On the robotoard
 connect the 3V3 pin to the P1/DFU pin with a wire (they are next to each
 other on the bottom left of the board, second row from the bottom) and then
 reset (by pressing the RST button) or power on the board.  Then flash the
@@ -110,6 +110,6 @@ Accessing the board
 -------------------
 
 Once built and deployed, access the MicroPython REPL (the Python prompt) via USB
-serial or UART, depending on the board.  For the pyboard you can try:
+serial or UART, depending on the board.  For the robotoard you can try:
 
     $ picocom /dev/ttyACM0

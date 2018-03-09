@@ -72,7 +72,7 @@
 #include "stm32_it.h"
 #include "pendsv.h"
 #include "irq.h"
-#include "pybthread.h"
+#include "robotthread.h"
 #include "gccollect.h"
 #include "extint.h"
 #include "timer.h"
@@ -136,16 +136,16 @@ typedef struct {
     uint32_t    r0, r1, r2, r3, r12, lr, pc, xpsr;
 } ExceptionRegisters_t;
 
-int pyb_hard_fault_debug = 0;
+int robot_hard_fault_debug = 0;
 
 void HardFault_C_Handler(ExceptionRegisters_t *regs) {
-    if (!pyb_hard_fault_debug) {
+    if (!robot_hard_fault_debug) {
         NVIC_SystemReset();
     }
 
     // We need to disable the USB so it doesn't try to write data out on
     // the VCP and then block indefinitely waiting for the buffer to drain.
-    pyb_usb_flags = 0;
+    robot_usb_flags = 0;
 
     mp_hal_stdout_tx_str("HardFault\r\n");
 
@@ -313,13 +313,13 @@ void SysTick_Handler(void) {
     }
 
     #if MICROPY_PY_THREAD
-    if (pyb_thread_enabled) {
-        if (pyb_thread_cur->timeslice == 0) {
-            if (pyb_thread_cur->run_next != pyb_thread_cur) {
+    if (robot_thread_enabled) {
+        if (robot_thread_cur->timeslice == 0) {
+            if (robot_thread_cur->run_next != robot_thread_cur) {
                 SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
             }
         } else {
-            --pyb_thread_cur->timeslice;
+            --robot_thread_cur->timeslice;
         }
     }
     #endif

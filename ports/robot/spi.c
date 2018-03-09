@@ -37,7 +37,7 @@
 #include "dma.h"
 #include "spi.h"
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class SPI - a master-driven serial protocol
 ///
 /// SPI is a serial protocol that is driven by a master.  At the physical level
@@ -46,7 +46,7 @@
 /// See usage model of I2C; SPI is very similar.  Main difference is
 /// parameters to init the SPI bus:
 ///
-///     from pyb import SPI
+///     from robot import SPI
 ///     spi = SPI(1, SPI.MASTER, baudrate=600000, polarity=1, phase=0, crc=0x7)
 ///
 /// Only required parameter is mode, SPI.MASTER or SPI.SLAVE.  Polarity can be
@@ -75,12 +75,12 @@
 // SPI6_TX: DMA2_Stream5.CHANNEL_1
 // SPI6_RX: DMA2_Stream6.CHANNEL_1
 
-typedef struct _pyb_spi_obj_t {
+typedef struct _robot_spi_obj_t {
     mp_obj_base_t base;
     SPI_HandleTypeDef *spi;
     const dma_descr_t *tx_dma_descr;
     const dma_descr_t *rx_dma_descr;
-} pyb_spi_obj_t;
+} robot_spi_obj_t;
 
 #if defined(MICROPY_HW_SPI1_SCK)
 SPI_HandleTypeDef SPIHandle1 = {.Instance = NULL};
@@ -101,36 +101,36 @@ SPI_HandleTypeDef SPIHandle5 = {.Instance = NULL};
 SPI_HandleTypeDef SPIHandle6 = {.Instance = NULL};
 #endif
 
-STATIC const pyb_spi_obj_t pyb_spi_obj[] = {
+STATIC const robot_spi_obj_t robot_spi_obj[] = {
     #if defined(MICROPY_HW_SPI1_SCK)
-    {{&pyb_spi_type}, &SPIHandle1, &dma_SPI_1_TX, &dma_SPI_1_RX},
+    {{&robot_spi_type}, &SPIHandle1, &dma_SPI_1_TX, &dma_SPI_1_RX},
     #else
-    {{&pyb_spi_type}, NULL, NULL, NULL},
+    {{&robot_spi_type}, NULL, NULL, NULL},
     #endif
     #if defined(MICROPY_HW_SPI2_SCK)
-    {{&pyb_spi_type}, &SPIHandle2, &dma_SPI_2_TX, &dma_SPI_2_RX},
+    {{&robot_spi_type}, &SPIHandle2, &dma_SPI_2_TX, &dma_SPI_2_RX},
     #else
-    {{&pyb_spi_type}, NULL, NULL, NULL},
+    {{&robot_spi_type}, NULL, NULL, NULL},
     #endif
     #if defined(MICROPY_HW_SPI3_SCK)
-    {{&pyb_spi_type}, &SPIHandle3, &dma_SPI_3_TX, &dma_SPI_3_RX},
+    {{&robot_spi_type}, &SPIHandle3, &dma_SPI_3_TX, &dma_SPI_3_RX},
     #else
-    {{&pyb_spi_type}, NULL, NULL, NULL},
+    {{&robot_spi_type}, NULL, NULL, NULL},
     #endif
     #if defined(MICROPY_HW_SPI4_SCK)
-    {{&pyb_spi_type}, &SPIHandle4, &dma_SPI_4_TX, &dma_SPI_4_RX},
+    {{&robot_spi_type}, &SPIHandle4, &dma_SPI_4_TX, &dma_SPI_4_RX},
     #else
-    {{&pyb_spi_type}, NULL, NULL, NULL},
+    {{&robot_spi_type}, NULL, NULL, NULL},
     #endif
     #if defined(MICROPY_HW_SPI5_SCK)
-    {{&pyb_spi_type}, &SPIHandle5, &dma_SPI_5_TX, &dma_SPI_5_RX},
+    {{&robot_spi_type}, &SPIHandle5, &dma_SPI_5_TX, &dma_SPI_5_RX},
     #else
-    {{&pyb_spi_type}, NULL, NULL, NULL},
+    {{&robot_spi_type}, NULL, NULL, NULL},
     #endif
     #if defined(MICROPY_HW_SPI6_SCK)
-    {{&pyb_spi_type}, &SPIHandle6, &dma_SPI_6_TX, &dma_SPI_6_RX},
+    {{&robot_spi_type}, &SPIHandle6, &dma_SPI_6_TX, &dma_SPI_6_RX},
     #else
-    {{&pyb_spi_type}, NULL, NULL, NULL},
+    {{&robot_spi_type}, NULL, NULL, NULL},
     #endif
 };
 
@@ -185,8 +185,8 @@ STATIC int spi_find(mp_obj_t id) {
     } else {
         // given an integer id
         int spi_id = mp_obj_get_int(id);
-        if (spi_id >= 1 && spi_id <= MP_ARRAY_SIZE(pyb_spi_obj)
-            && pyb_spi_obj[spi_id - 1].spi != NULL) {
+        if (spi_id >= 1 && spi_id <= MP_ARRAY_SIZE(robot_spi_obj)
+            && robot_spi_obj[spi_id - 1].spi != NULL) {
             return spi_id;
         }
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
@@ -242,13 +242,13 @@ STATIC void spi_set_params(SPI_HandleTypeDef *spi, uint32_t prescale, int32_t ba
 
 // TODO allow to take a list of pins to use
 void spi_init(SPI_HandleTypeDef *spi, bool enable_nss_pin) {
-    const pyb_spi_obj_t *self;
+    const robot_spi_obj_t *self;
     const pin_obj_t *pins[4] = { NULL, NULL, NULL, NULL };
 
     if (0) {
     #if defined(MICROPY_HW_SPI1_SCK)
     } else if (spi->Instance == SPI1) {
-        self = &pyb_spi_obj[0];
+        self = &robot_spi_obj[0];
         #if defined(MICROPY_HW_SPI1_NSS)
         pins[0] = &MICROPY_HW_SPI1_NSS;
         #endif
@@ -262,7 +262,7 @@ void spi_init(SPI_HandleTypeDef *spi, bool enable_nss_pin) {
     #endif
     #if defined(MICROPY_HW_SPI2_SCK)
     } else if (spi->Instance == SPI2) {
-        self = &pyb_spi_obj[1];
+        self = &robot_spi_obj[1];
         #if defined(MICROPY_HW_SPI2_NSS)
         pins[0] = &MICROPY_HW_SPI2_NSS;
         #endif
@@ -276,7 +276,7 @@ void spi_init(SPI_HandleTypeDef *spi, bool enable_nss_pin) {
     #endif
     #if defined(MICROPY_HW_SPI3_SCK)
     } else if (spi->Instance == SPI3) {
-        self = &pyb_spi_obj[2];
+        self = &robot_spi_obj[2];
         #if defined(MICROPY_HW_SPI3_NSS)
         pins[0] = &MICROPY_HW_SPI3_NSS;
         #endif
@@ -290,7 +290,7 @@ void spi_init(SPI_HandleTypeDef *spi, bool enable_nss_pin) {
     #endif
     #if defined(MICROPY_HW_SPI4_SCK)
     } else if (spi->Instance == SPI4) {
-        self = &pyb_spi_obj[3];
+        self = &robot_spi_obj[3];
         #if defined(MICROPY_HW_SPI4_NSS)
         pins[0] = &MICROPY_HW_SPI4_NSS;
         #endif
@@ -304,7 +304,7 @@ void spi_init(SPI_HandleTypeDef *spi, bool enable_nss_pin) {
     #endif
     #if defined(MICROPY_HW_SPI5_SCK)
     } else if (spi->Instance == SPI5) {
-        self = &pyb_spi_obj[4];
+        self = &robot_spi_obj[4];
         #if defined(MICROPY_HW_SPI5_NSS)
         pins[0] = &MICROPY_HW_SPI5_NSS;
         #endif
@@ -318,7 +318,7 @@ void spi_init(SPI_HandleTypeDef *spi, bool enable_nss_pin) {
     #endif
     #if defined(MICROPY_HW_SPI6_SCK)
     } else if (spi->Instance == SPI6) {
-        self = &pyb_spi_obj[5];
+        self = &robot_spi_obj[5];
         #if defined(MICROPY_HW_SPI6_NSS)
         pins[0] = &MICROPY_HW_SPI6_NSS;
         #endif
@@ -342,7 +342,7 @@ void spi_init(SPI_HandleTypeDef *spi, bool enable_nss_pin) {
         if (pins[i] == NULL) {
             continue;
         }
-        mp_hal_pin_config_alt(pins[i], mode, pull, AF_FN_SPI, (self - &pyb_spi_obj[0]) + 1);
+        mp_hal_pin_config_alt(pins[i], mode, pull, AF_FN_SPI, (self - &robot_spi_obj[0]) + 1);
     }
 
     // init the SPI device
@@ -421,7 +421,7 @@ STATIC HAL_StatusTypeDef spi_wait_dma_finished(SPI_HandleTypeDef *spi, uint32_t 
 // and use that value for the baudrate in the formula, plus a small constant.
 #define SPI_TRANSFER_TIMEOUT(len) ((len) + 100)
 
-STATIC void spi_transfer(const pyb_spi_obj_t *self, size_t len, const uint8_t *src, uint8_t *dest, uint32_t timeout) {
+STATIC void spi_transfer(const robot_spi_obj_t *self, size_t len, const uint8_t *src, uint8_t *dest, uint32_t timeout) {
     // Note: there seems to be a problem sending 1 byte using DMA the first
     // time directly after the SPI/DMA is initialised.  The cause of this is
     // unknown but we sidestep the issue by using polling for 1 byte transfer.
@@ -542,18 +542,18 @@ STATIC void spi_print(const mp_print_t *print, SPI_HandleTypeDef *spi, bool lega
 }
 
 /******************************************************************************/
-/* MicroPython bindings for legacy pyb API                                    */
+/* MicroPython bindings for legacy robot API                                    */
 
 SPI_HandleTypeDef *spi_get_handle(mp_obj_t o) {
-    if (!MP_OBJ_IS_TYPE(o, &pyb_spi_type)) {
+    if (!MP_OBJ_IS_TYPE(o, &robot_spi_type)) {
         mp_raise_ValueError("expecting an SPI object");
     }
-    pyb_spi_obj_t *self = o;
+    robot_spi_obj_t *self = o;
     return self->spi;
 }
 
-STATIC void pyb_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    pyb_spi_obj_t *self = self_in;
+STATIC void robot_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    robot_spi_obj_t *self = self_in;
     spi_print(print, self->spi, true);
 }
 
@@ -563,7 +563,7 @@ STATIC void pyb_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
 ///
 ///   - `mode` must be either `SPI.MASTER` or `SPI.SLAVE`.
 ///   - `baudrate` is the SCK clock rate (only sensible for a master).
-STATIC mp_obj_t pyb_spi_init_helper(const pyb_spi_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_spi_init_helper(const robot_spi_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_mode,     MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = 328125} },
@@ -621,7 +621,7 @@ STATIC mp_obj_t pyb_spi_init_helper(const pyb_spi_obj_t *self, size_t n_args, co
 ///
 /// At the moment, the NSS pin is not used by the SPI driver and is free
 /// for other use.
-STATIC mp_obj_t pyb_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t robot_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // check arguments
     mp_arg_check_num(n_args, n_kw, 1, MP_OBJ_FUN_ARGS_MAX, true);
 
@@ -629,31 +629,31 @@ STATIC mp_obj_t pyb_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_
     int spi_id = spi_find(args[0]);
 
     // get SPI object
-    const pyb_spi_obj_t *spi_obj = &pyb_spi_obj[spi_id - 1];
+    const robot_spi_obj_t *spi_obj = &robot_spi_obj[spi_id - 1];
 
     if (n_args > 1 || n_kw > 0) {
         // start the peripheral
         mp_map_t kw_args;
         mp_map_init_fixed_table(&kw_args, n_kw, args + n_args);
-        pyb_spi_init_helper(spi_obj, n_args - 1, args + 1, &kw_args);
+        robot_spi_init_helper(spi_obj, n_args - 1, args + 1, &kw_args);
     }
 
     return (mp_obj_t)spi_obj;
 }
 
-STATIC mp_obj_t pyb_spi_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
-    return pyb_spi_init_helper(args[0], n_args - 1, args + 1, kw_args);
+STATIC mp_obj_t robot_spi_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
+    return robot_spi_init_helper(args[0], n_args - 1, args + 1, kw_args);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_spi_init_obj, 1, pyb_spi_init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_spi_init_obj, 1, robot_spi_init);
 
 /// \method deinit()
 /// Turn off the SPI bus.
-STATIC mp_obj_t pyb_spi_deinit(mp_obj_t self_in) {
-    pyb_spi_obj_t *self = self_in;
+STATIC mp_obj_t robot_spi_deinit(mp_obj_t self_in) {
+    robot_spi_obj_t *self = self_in;
     spi_deinit(self->spi);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_spi_deinit_obj, pyb_spi_deinit);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robot_spi_deinit_obj, robot_spi_deinit);
 
 /// \method send(send, *, timeout=5000)
 /// Send data on the bus:
@@ -662,7 +662,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_spi_deinit_obj, pyb_spi_deinit);
 ///   - `timeout` is the timeout in milliseconds to wait for the send.
 ///
 /// Return value: `None`.
-STATIC mp_obj_t pyb_spi_send(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_spi_send(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // TODO assumes transmission size is 8-bits wide
 
     static const mp_arg_t allowed_args[] = {
@@ -671,21 +671,21 @@ STATIC mp_obj_t pyb_spi_send(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     };
 
     // parse args
-    pyb_spi_obj_t *self = pos_args[0];
+    robot_spi_obj_t *self = pos_args[0];
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // get the buffer to send from
     mp_buffer_info_t bufinfo;
     uint8_t data[1];
-    pyb_buf_get_for_send(args[0].u_obj, &bufinfo, data);
+    robot_buf_get_for_send(args[0].u_obj, &bufinfo, data);
 
     // send the data
     spi_transfer(self, bufinfo.len, bufinfo.buf, NULL, args[1].u_int);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_spi_send_obj, 1, pyb_spi_send);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_spi_send_obj, 1, robot_spi_send);
 
 /// \method recv(recv, *, timeout=5000)
 ///
@@ -697,7 +697,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_spi_send_obj, 1, pyb_spi_send);
 ///
 /// Return value: if `recv` is an integer then a new buffer of the bytes received,
 /// otherwise the same buffer that was passed in to `recv`.
-STATIC mp_obj_t pyb_spi_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_spi_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // TODO assumes transmission size is 8-bits wide
 
     static const mp_arg_t allowed_args[] = {
@@ -706,13 +706,13 @@ STATIC mp_obj_t pyb_spi_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     };
 
     // parse args
-    pyb_spi_obj_t *self = pos_args[0];
+    robot_spi_obj_t *self = pos_args[0];
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // get the buffer to receive into
     vstr_t vstr;
-    mp_obj_t o_ret = pyb_buf_get_for_recv(args[0].u_obj, &vstr);
+    mp_obj_t o_ret = robot_buf_get_for_recv(args[0].u_obj, &vstr);
 
     // receive the data
     spi_transfer(self, vstr.len, NULL, (uint8_t*)vstr.buf, args[1].u_int);
@@ -724,7 +724,7 @@ STATIC mp_obj_t pyb_spi_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
         return mp_obj_new_str_from_vstr(&mp_type_bytes, &vstr);
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_spi_recv_obj, 1, pyb_spi_recv);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_spi_recv_obj, 1, robot_spi_recv);
 
 /// \method send_recv(send, recv=None, *, timeout=5000)
 ///
@@ -737,7 +737,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_spi_recv_obj, 1, pyb_spi_recv);
 ///   - `timeout` is the timeout in milliseconds to wait for the receive.
 ///
 /// Return value: the buffer with the received bytes.
-STATIC mp_obj_t pyb_spi_send_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robot_spi_send_recv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // TODO assumes transmission size is 8-bits wide
 
     static const mp_arg_t allowed_args[] = {
@@ -747,7 +747,7 @@ STATIC mp_obj_t pyb_spi_send_recv(size_t n_args, const mp_obj_t *pos_args, mp_ma
     };
 
     // parse args
-    pyb_spi_obj_t *self = pos_args[0];
+    robot_spi_obj_t *self = pos_args[0];
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
@@ -765,7 +765,7 @@ STATIC mp_obj_t pyb_spi_send_recv(size_t n_args, const mp_obj_t *pos_args, mp_ma
         o_ret = args[0].u_obj;
     } else {
         // get the buffer to send from
-        pyb_buf_get_for_send(args[0].u_obj, &bufinfo_send, data_send);
+        robot_buf_get_for_send(args[0].u_obj, &bufinfo_send, data_send);
 
         // get the buffer to receive into
         if (args[1].u_obj == MP_OBJ_NULL) {
@@ -794,12 +794,12 @@ STATIC mp_obj_t pyb_spi_send_recv(size_t n_args, const mp_obj_t *pos_args, mp_ma
         return mp_obj_new_str_from_vstr(&mp_type_bytes, &vstr_recv);
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pyb_spi_send_recv_obj, 1, pyb_spi_send_recv);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robot_spi_send_recv_obj, 1, robot_spi_send_recv);
 
-STATIC const mp_rom_map_elem_t pyb_spi_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t robot_spi_locals_dict_table[] = {
     // instance methods
-    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&pyb_spi_init_obj) },
-    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&pyb_spi_deinit_obj) },
+    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&robot_spi_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&robot_spi_deinit_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&mp_machine_spi_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_readinto), MP_ROM_PTR(&mp_machine_spi_readinto_obj) },
@@ -807,9 +807,9 @@ STATIC const mp_rom_map_elem_t pyb_spi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_write_readinto), MP_ROM_PTR(&mp_machine_spi_write_readinto_obj) },
 
     // legacy methods
-    { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&pyb_spi_send_obj) },
-    { MP_ROM_QSTR(MP_QSTR_recv), MP_ROM_PTR(&pyb_spi_recv_obj) },
-    { MP_ROM_QSTR(MP_QSTR_send_recv), MP_ROM_PTR(&pyb_spi_send_recv_obj) },
+    { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&robot_spi_send_obj) },
+    { MP_ROM_QSTR(MP_QSTR_recv), MP_ROM_PTR(&robot_spi_recv_obj) },
+    { MP_ROM_QSTR(MP_QSTR_send_recv), MP_ROM_PTR(&robot_spi_send_recv_obj) },
 
     // class constants
     /// \constant MASTER - for initialising the bus to master mode
@@ -830,23 +830,23 @@ STATIC const mp_rom_map_elem_t pyb_spi_locals_dict_table[] = {
     */
 };
 
-STATIC MP_DEFINE_CONST_DICT(pyb_spi_locals_dict, pyb_spi_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robot_spi_locals_dict, robot_spi_locals_dict_table);
 
 STATIC void spi_transfer_machine(mp_obj_base_t *self_in, size_t len, const uint8_t *src, uint8_t *dest) {
-    spi_transfer((pyb_spi_obj_t*)self_in, len, src, dest, SPI_TRANSFER_TIMEOUT(len));
+    spi_transfer((robot_spi_obj_t*)self_in, len, src, dest, SPI_TRANSFER_TIMEOUT(len));
 }
 
-STATIC const mp_machine_spi_p_t pyb_spi_p = {
+STATIC const mp_machine_spi_p_t robot_spi_p = {
     .transfer = spi_transfer_machine,
 };
 
-const mp_obj_type_t pyb_spi_type = {
+const mp_obj_type_t robot_spi_type = {
     { &mp_type_type },
     .name = MP_QSTR_SPI,
-    .print = pyb_spi_print,
-    .make_new = pyb_spi_make_new,
-    .protocol = &pyb_spi_p,
-    .locals_dict = (mp_obj_dict_t*)&pyb_spi_locals_dict,
+    .print = robot_spi_print,
+    .make_new = robot_spi_make_new,
+    .protocol = &robot_spi_p,
+    .locals_dict = (mp_obj_dict_t*)&robot_spi_locals_dict,
 };
 
 /******************************************************************************/
@@ -854,21 +854,21 @@ const mp_obj_type_t pyb_spi_type = {
 
 typedef struct _machine_hard_spi_obj_t {
     mp_obj_base_t base;
-    const pyb_spi_obj_t *pyb;
+    const robot_spi_obj_t *robot;
 } machine_hard_spi_obj_t;
 
 STATIC const machine_hard_spi_obj_t machine_hard_spi_obj[] = {
-    {{&machine_hard_spi_type}, &pyb_spi_obj[0]},
-    {{&machine_hard_spi_type}, &pyb_spi_obj[1]},
-    {{&machine_hard_spi_type}, &pyb_spi_obj[2]},
-    {{&machine_hard_spi_type}, &pyb_spi_obj[3]},
-    {{&machine_hard_spi_type}, &pyb_spi_obj[4]},
-    {{&machine_hard_spi_type}, &pyb_spi_obj[5]},
+    {{&machine_hard_spi_type}, &robot_spi_obj[0]},
+    {{&machine_hard_spi_type}, &robot_spi_obj[1]},
+    {{&machine_hard_spi_type}, &robot_spi_obj[2]},
+    {{&machine_hard_spi_type}, &robot_spi_obj[3]},
+    {{&machine_hard_spi_type}, &robot_spi_obj[4]},
+    {{&machine_hard_spi_type}, &robot_spi_obj[5]},
 };
 
 STATIC void machine_hard_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     machine_hard_spi_obj_t *self = (machine_hard_spi_obj_t*)self_in;
-    spi_print(print, self->pyb->spi, false);
+    spi_print(print, self->robot->spi, false);
 }
 
 mp_obj_t machine_hard_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
@@ -899,7 +899,7 @@ mp_obj_t machine_hard_spi_make_new(const mp_obj_type_t *type, size_t n_args, siz
     }
 
     // set the SPI configuration values
-    SPI_InitTypeDef *init = &self->pyb->spi->Init;
+    SPI_InitTypeDef *init = &self->robot->spi->Init;
     init->Mode = SPI_MODE_MASTER;
 
     // these parameters are not currently configurable
@@ -910,12 +910,12 @@ mp_obj_t machine_hard_spi_make_new(const mp_obj_type_t *type, size_t n_args, siz
     init->CRCPolynomial = 0;
 
     // set configurable paramaters
-    spi_set_params(self->pyb->spi, 0xffffffff, args[ARG_baudrate].u_int,
+    spi_set_params(self->robot->spi, 0xffffffff, args[ARG_baudrate].u_int,
         args[ARG_polarity].u_int, args[ARG_phase].u_int, args[ARG_bits].u_int,
         args[ARG_firstbit].u_int);
 
     // init the SPI bus
-    spi_init(self->pyb->spi, false);
+    spi_init(self->robot->spi, false);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -935,22 +935,22 @@ STATIC void machine_hard_spi_init(mp_obj_base_t *self_in, size_t n_args, const m
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // set the SPI configuration values
-    spi_set_params(self->pyb->spi, 0xffffffff, args[ARG_baudrate].u_int,
+    spi_set_params(self->robot->spi, 0xffffffff, args[ARG_baudrate].u_int,
         args[ARG_polarity].u_int, args[ARG_phase].u_int, args[ARG_bits].u_int,
         args[ARG_firstbit].u_int);
 
     // re-init the SPI bus
-    spi_init(self->pyb->spi, false);
+    spi_init(self->robot->spi, false);
 }
 
 STATIC void machine_hard_spi_deinit(mp_obj_base_t *self_in) {
     machine_hard_spi_obj_t *self = (machine_hard_spi_obj_t*)self_in;
-    spi_deinit(self->pyb->spi);
+    spi_deinit(self->robot->spi);
 }
 
 STATIC void machine_hard_spi_transfer(mp_obj_base_t *self_in, size_t len, const uint8_t *src, uint8_t *dest) {
     machine_hard_spi_obj_t *self = (machine_hard_spi_obj_t*)self_in;
-    spi_transfer(self->pyb, len, src, dest, SPI_TRANSFER_TIMEOUT(len));
+    spi_transfer(self->robot, len, src, dest, SPI_TRANSFER_TIMEOUT(len));
 }
 
 STATIC const mp_machine_spi_p_t machine_hard_spi_p = {

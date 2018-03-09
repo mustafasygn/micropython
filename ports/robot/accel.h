@@ -26,7 +26,7 @@
 #ifndef MICROPY_INCLUDED_STMHAL_ACCEL_H
 #define MICROPY_INCLUDED_STMHAL_ACCEL_H
 
-extern const mp_obj_type_t pyb_accel_type;
+extern const mp_obj_type_t robot_accel_type;
 
 void accel_init(void);
 

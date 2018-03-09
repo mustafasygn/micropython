@@ -28,7 +28,7 @@
 #include "py/mphal.h"
 #include "irq.h"
 #include "systick.h"
-#include "pybthread.h"
+#include "robotthread.h"
 
 extern __IO uint32_t uwTick;
 

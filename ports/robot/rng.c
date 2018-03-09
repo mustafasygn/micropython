@@ -31,7 +31,7 @@
 
 #if MICROPY_HW_ENABLE_RNG
 
-/// \moduleref pyb
+/// \moduleref robot
 
 STATIC RNG_HandleTypeDef RNGHandle = {.Instance = NULL};
 
@@ -55,13 +55,13 @@ uint32_t rng_get(void) {
 
 /// \function rng()
 /// Return a 30-bit hardware generated random number.
-STATIC mp_obj_t pyb_rng_get(void) {
+STATIC mp_obj_t robot_rng_get(void) {
     if (RNGHandle.State == HAL_RNG_STATE_RESET) {
         rng_init();
     }
     return mp_obj_new_int(HAL_RNG_GetRandomNumber(&RNGHandle) >> 2);
 }
 
-MP_DEFINE_CONST_FUN_OBJ_0(pyb_rng_get_obj, pyb_rng_get);
+MP_DEFINE_CONST_FUN_OBJ_0(robot_rng_get_obj, robot_rng_get);
 
 #endif // MICROPY_HW_ENABLE_RNG

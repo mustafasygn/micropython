@@ -31,7 +31,7 @@
 #define IRQ_STATE_ENABLED  (0x00000000)
 
 // Enable this to get a count for the number of times each irq handler is called,
-// accessible via pyb.irq_stats().
+// accessible via robot.irq_stats().
 #define IRQ_ENABLE_STATS (0)
 
 #if IRQ_ENABLE_STATS
@@ -72,10 +72,10 @@ static inline void restore_irq_pri(uint32_t basepri) {
 
 #endif
 
-MP_DECLARE_CONST_FUN_OBJ_0(pyb_wfi_obj);
-MP_DECLARE_CONST_FUN_OBJ_0(pyb_disable_irq_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_enable_irq_obj);
-MP_DECLARE_CONST_FUN_OBJ_0(pyb_irq_stats_obj);
+MP_DECLARE_CONST_FUN_OBJ_0(robot_wfi_obj);
+MP_DECLARE_CONST_FUN_OBJ_0(robot_disable_irq_obj);
+MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(robot_enable_irq_obj);
+MP_DECLARE_CONST_FUN_OBJ_0(robot_irq_stats_obj);
 
 // IRQ priority definitions.
 //

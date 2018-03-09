@@ -34,7 +34,7 @@
 #include "pin.h"
 #include "extint.h"
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class Pin - control I/O pins
 ///
 /// A pin is the basic object to control I/O pins.  It has methods to set
@@ -43,40 +43,40 @@
 ///
 /// Usage Model:
 ///
-/// All Board Pins are predefined as pyb.Pin.board.Name
+/// All Board Pins are predefined as robot.Pin.board.Name
 ///
-///     x1_pin = pyb.Pin.board.X1
+///     x1_pin = robot.Pin.board.X1
 ///
-///     g = pyb.Pin(pyb.Pin.board.X1, pyb.Pin.IN)
+///     g = robot.Pin(robot.Pin.board.X1, robot.Pin.IN)
 ///
 /// CPU pins which correspond to the board pins are available
-/// as `pyb.cpu.Name`. For the CPU pins, the names are the port letter
-/// followed by the pin number. On the PYBv1.0, `pyb.Pin.board.X1` and
-/// `pyb.Pin.cpu.B6` are the same pin.
+/// as `robot.cpu.Name`. For the CPU pins, the names are the port letter
+/// followed by the pin number. On the PYBv1.0, `robot.Pin.board.X1` and
+/// `robot.Pin.cpu.B6` are the same pin.
 ///
 /// You can also use strings:
 ///
-///     g = pyb.Pin('X1', pyb.Pin.OUT_PP)
+///     g = robot.Pin('X1', robot.Pin.OUT_PP)
 ///
 /// Users can add their own names:
 ///
-///     MyMapperDict = { 'LeftMotorDir' : pyb.Pin.cpu.C12 }
-///     pyb.Pin.dict(MyMapperDict)
-///     g = pyb.Pin("LeftMotorDir", pyb.Pin.OUT_OD)
+///     MyMapperDict = { 'LeftMotorDir' : robot.Pin.cpu.C12 }
+///     robot.Pin.dict(MyMapperDict)
+///     g = robot.Pin("LeftMotorDir", robot.Pin.OUT_OD)
 ///
 /// and can query mappings
 ///
-///     pin = pyb.Pin("LeftMotorDir")
+///     pin = robot.Pin("LeftMotorDir")
 ///
 /// Users can also add their own mapping function:
 ///
 ///     def MyMapper(pin_name):
 ///        if pin_name == "LeftMotorDir":
-///            return pyb.Pin.cpu.A0
+///            return robot.Pin.cpu.A0
 ///
-///     pyb.Pin.mapper(MyMapper)
+///     robot.Pin.mapper(MyMapper)
 ///
-/// So, if you were to call: `pyb.Pin("LeftMotorDir", pyb.Pin.OUT_PP)`
+/// So, if you were to call: `robot.Pin("LeftMotorDir", robot.Pin.OUT_PP)`
 /// then `"LeftMotorDir"` is passed directly to the mapper function.
 ///
 /// To summarise, the following order determines how things get mapped into
@@ -88,7 +88,7 @@
 /// 4. Supply a string which matches a board pin
 /// 5. Supply a string which matches a CPU port/pin
 ///
-/// You can set `pyb.Pin.debug(True)` to get some debug information about
+/// You can set `robot.Pin.debug(True)` to get some debug information about
 /// how a particular object gets mapped to a pin.
 
 // Pin class variables
@@ -523,7 +523,7 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_on),      MP_ROM_PTR(&pin_on_obj) },
     { MP_ROM_QSTR(MP_QSTR_irq),     MP_ROM_PTR(&pin_irq_obj) },
 
-    // Legacy names as used by pyb.Pin
+    // Legacy names as used by robot.Pin
     { MP_ROM_QSTR(MP_QSTR_low),     MP_ROM_PTR(&pin_off_obj) },
     { MP_ROM_QSTR(MP_QSTR_high),    MP_ROM_PTR(&pin_on_obj) },
     { MP_ROM_QSTR(MP_QSTR_name),    MP_ROM_PTR(&pin_name_obj) },
@@ -599,7 +599,7 @@ const mp_obj_type_t pin_type = {
     .locals_dict = (mp_obj_dict_t*)&pin_locals_dict,
 };
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class PinAF - Pin Alternate Functions
 ///
 /// A Pin represents a physical pin on the microcprocessor. Each pin
@@ -608,13 +608,13 @@ const mp_obj_type_t pin_type = {
 ///
 /// Usage Model:
 ///
-///     x3 = pyb.Pin.board.X3
+///     x3 = robot.Pin.board.X3
 ///     x3_af = x3.af_list()
 ///
 /// x3_af will now contain an array of PinAF objects which are availble on
 /// pin X3.
 ///
-/// For the pyboard, x3_af would contain:
+/// For the robotoard, x3_af would contain:
 ///     [Pin.AF1_TIM2, Pin.AF2_TIM5, Pin.AF3_TIM9, Pin.AF7_USART2]
 ///
 /// Normally, each peripheral would configure the af automatically, but sometimes
@@ -622,9 +622,9 @@ const mp_obj_type_t pin_type = {
 /// is desired.
 ///
 /// To configure X3 to expose TIM2_CH3, you could use:
-///    pin = pyb.Pin(pyb.Pin.board.X3, mode=pyb.Pin.AF_PP, af=pyb.Pin.AF1_TIM2)
+///    pin = robot.Pin(robot.Pin.board.X3, mode=robot.Pin.AF_PP, af=robot.Pin.AF1_TIM2)
 /// or:
-///    pin = pyb.Pin(pyb.Pin.board.X3, mode=pyb.Pin.AF_PP, af=1)
+///    pin = robot.Pin(robot.Pin.board.X3, mode=robot.Pin.AF_PP, af=1)
 
 /// \method __str__()
 /// Return a string describing the alternate function.

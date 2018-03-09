@@ -31,13 +31,13 @@ typedef enum {
     PYB_LED_GREEN = 2,
     PYB_LED_YELLOW = 3,
     PYB_LED_BLUE = 4,
-} pyb_led_t;
+} robot_led_t;
 
 void led_init(void);
-void led_state(pyb_led_t led, int state);
-void led_toggle(pyb_led_t led);
+void led_state(robot_led_t led, int state);
+void led_toggle(robot_led_t led);
 void led_debug(int value, int delay);
 
-extern const mp_obj_type_t pyb_led_type;
+extern const mp_obj_type_t robot_led_type;
 
 #endif // MICROPY_INCLUDED_STMHAL_LED_H

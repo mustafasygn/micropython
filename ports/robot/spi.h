@@ -32,7 +32,7 @@ extern SPI_HandleTypeDef SPIHandle3;
 extern SPI_HandleTypeDef SPIHandle4;
 extern SPI_HandleTypeDef SPIHandle5;
 extern SPI_HandleTypeDef SPIHandle6;
-extern const mp_obj_type_t pyb_spi_type;
+extern const mp_obj_type_t robot_spi_type;
 extern const mp_obj_type_t machine_soft_spi_type;
 extern const mp_obj_type_t machine_hard_spi_type;
 

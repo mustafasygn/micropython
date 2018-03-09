@@ -28,6 +28,6 @@
 
 void dac_init(void);
 
-extern const mp_obj_type_t pyb_dac_type;
+extern const mp_obj_type_t robot_dac_type;
 
 #endif // MICROPY_INCLUDED_STMHAL_DAC_H

@@ -29,9 +29,9 @@
 void servo_init(void);
 void servo_timer_irq_callback(void);
 
-extern const mp_obj_type_t pyb_servo_type;
+extern const mp_obj_type_t robot_servo_type;
 
-MP_DECLARE_CONST_FUN_OBJ_2(pyb_servo_set_obj);
-MP_DECLARE_CONST_FUN_OBJ_2(pyb_pwm_set_obj);
+MP_DECLARE_CONST_FUN_OBJ_2(robot_servo_set_obj);
+MP_DECLARE_CONST_FUN_OBJ_2(robot_pwm_set_obj);
 
 #endif // MICROPY_INCLUDED_STMHAL_SERVO_H

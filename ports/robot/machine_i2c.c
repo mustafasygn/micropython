@@ -71,30 +71,30 @@ STATIC const mp_obj_type_t machine_hard_i2c_type;
 
 typedef struct _machine_hard_i2c_obj_t {
     mp_obj_base_t base;
-    const pyb_i2c_obj_t *pyb;
+    const robot_i2c_obj_t *robot;
     uint32_t *timeout;
 } machine_hard_i2c_obj_t;
 
 STATIC uint32_t machine_hard_i2c_timeout[4];
 
 STATIC const machine_hard_i2c_obj_t machine_hard_i2c_obj[] = {
-    {{&machine_hard_i2c_type}, &pyb_i2c_obj[0], &machine_hard_i2c_timeout[0]},
-    {{&machine_hard_i2c_type}, &pyb_i2c_obj[1], &machine_hard_i2c_timeout[1]},
-    {{&machine_hard_i2c_type}, &pyb_i2c_obj[2], &machine_hard_i2c_timeout[2]},
-    {{&machine_hard_i2c_type}, &pyb_i2c_obj[3], &machine_hard_i2c_timeout[3]},
+    {{&machine_hard_i2c_type}, &robot_i2c_obj[0], &machine_hard_i2c_timeout[0]},
+    {{&machine_hard_i2c_type}, &robot_i2c_obj[1], &machine_hard_i2c_timeout[1]},
+    {{&machine_hard_i2c_type}, &robot_i2c_obj[2], &machine_hard_i2c_timeout[2]},
+    {{&machine_hard_i2c_type}, &robot_i2c_obj[3], &machine_hard_i2c_timeout[3]},
 };
 
 STATIC void machine_hard_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     machine_hard_i2c_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "I2C(%u, freq=%u, timeout=%u)",
         self - &machine_hard_i2c_obj[0] + 1,
-        i2c_get_baudrate(&self->pyb->i2c->Init),
+        i2c_get_baudrate(&self->robot->i2c->Init),
         *self->timeout);
 }
 
 STATIC void machine_hard_i2c_init(const machine_hard_i2c_obj_t *self, uint32_t freq, uint32_t timeout) {
     *self->timeout = timeout;
-    i2c_init_freq(self->pyb, freq);
+    i2c_init_freq(self->robot, freq);
 }
 
 // this function is based on STM code
@@ -174,7 +174,7 @@ STATIC int send_addr_byte(I2C_HandleTypeDef *hi2c, uint8_t addr_byte, uint32_t T
 // this function is based on STM code
 int machine_hard_i2c_readfrom(mp_obj_base_t *self_in, uint16_t addr, uint8_t *dest, size_t len, bool stop) {
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t*)self_in;
-    I2C_HandleTypeDef *hi2c = self->pyb->i2c;
+    I2C_HandleTypeDef *hi2c = self->robot->i2c;
     uint32_t Timeout = *self->timeout;
 
     /* Init tickstart for timeout management*/
@@ -330,7 +330,7 @@ int machine_hard_i2c_readfrom(mp_obj_base_t *self_in, uint16_t addr, uint8_t *de
 // this function is based on STM code
 int machine_hard_i2c_writeto(mp_obj_base_t *self_in, uint16_t addr, const uint8_t *src, size_t len, bool stop) {
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t*)self_in;
-    I2C_HandleTypeDef *hi2c = self->pyb->i2c;
+    I2C_HandleTypeDef *hi2c = self->robot->i2c;
     uint32_t Timeout = *self->timeout;
 
     /* Init tickstart for timeout management*/

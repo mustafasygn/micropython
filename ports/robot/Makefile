@@ -202,7 +202,7 @@ SRC_C = \
 	irq.c \
 	pendsv.c \
 	systick.c  \
-	pybthread.c \
+	robotthread.c \
 	timer.c \
 	led.c \
 	pin.c \
@@ -220,7 +220,7 @@ SRC_C = \
 	help.c \
 	machine_i2c.c \
 	modmachine.c \
-	modpyb.c \
+	modrobot.c \
 	modstm.c \
 	moduos.c \
 	modutime.c \
@@ -417,9 +417,9 @@ INSERT_USB_IDS = $(TOP)/tools/insert-usb-ids.py
 FILE2H = $(TOP)/tools/file2h.py
 
 USB_IDS_FILE = usb.h
-CDCINF_TEMPLATE = pybcdc.inf_template
-GEN_CDCINF_FILE = $(HEADER_BUILD)/pybcdc.inf
-GEN_CDCINF_HEADER = $(HEADER_BUILD)/pybcdc_inf.h
+CDCINF_TEMPLATE = robotcdc.inf_template
+GEN_CDCINF_FILE = $(HEADER_BUILD)/robotcdc.inf
+GEN_CDCINF_HEADER = $(HEADER_BUILD)/robotcdc_inf.h
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(SRC_MOD) $(SRC_LIB) $(EXTMOD_SRC_C)

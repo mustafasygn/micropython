@@ -17,7 +17,7 @@
 #define MICROPY_HW_CLK_PLLQ (7)
 #define MICROPY_HW_CLK_LAST_FREQ (1)
 
-// The pyboard has a 32kHz crystal for the RTC
+// The robotoard has a 32kHz crystal for the RTC
 #define MICROPY_HW_RTC_USE_LSE      (1)
 #define MICROPY_HW_RTC_USE_US       (0)
 #define MICROPY_HW_RTC_USE_CALOUT   (1)
@@ -65,7 +65,7 @@
 #define MICROPY_HW_USRSW_EXTI_MODE  (GPIO_MODE_IT_FALLING)
 #define MICROPY_HW_USRSW_PRESSED    (0)
 
-// The pyboard has 4 LEDs
+// The robotoard has 4 LEDs
 #define MICROPY_HW_LED1             (pin_A13) // red
 #define MICROPY_HW_LED2             (pin_A14) // green
 #define MICROPY_HW_LED3             (pin_A15) // yellow

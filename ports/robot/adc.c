@@ -35,15 +35,15 @@
 #include "genhdr/pins.h"
 #include "timer.h"
 
-/// \moduleref pyb
+/// \moduleref robot
 /// \class ADC - analog to digital conversion: read analog values on a pin
 ///
 /// Usage:
 ///
-///     adc = pyb.ADC(pin)              # create an analog object from a pin
+///     adc = robot.ADC(pin)              # create an analog object from a pin
 ///     val = adc.read()                # read an analog value
 ///
-///     adc = pyb.ADCAll(resolution)    # creale an ADCAll object
+///     adc = robot.ADCAll(resolution)    # creale an ADCAll object
 ///     val = adc.read_channel(channel) # read the given channel
 ///     val = adc.read_core_temp()      # read MCU temperature
 ///     val = adc.read_core_vbat()      # read MCU VBAT
@@ -108,12 +108,12 @@
 #define ADC_SCALE (3.3f / 4095)
 #define VREFIN_CAL ((uint16_t *)ADC_CAL_ADDRESS)
 
-typedef struct _pyb_obj_adc_t {
+typedef struct _robot_obj_adc_t {
     mp_obj_base_t base;
     mp_obj_t pin_name;
     int channel;
     ADC_HandleTypeDef handle;
-} pyb_obj_adc_t;
+} robot_obj_adc_t;
 
 // convert user-facing channel number into internal channel number
 static inline uint32_t adc_get_internal_channel(uint32_t channel) {
@@ -164,7 +164,7 @@ STATIC void adcx_clock_enable(void) {
 #endif
 }
 
-STATIC void adc_init_single(pyb_obj_adc_t *adc_obj) {
+STATIC void adc_init_single(robot_obj_adc_t *adc_obj) {
     if (!is_adcx_channel(adc_obj->channel)) {
         return;
     }
@@ -265,7 +265,7 @@ STATIC uint32_t adc_read_channel(ADC_HandleTypeDef *adcHandle) {
 /* MicroPython bindings : adc object (single channel)                         */
 
 STATIC void adc_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    pyb_obj_adc_t *self = self_in;
+    robot_obj_adc_t *self = self_in;
     mp_print_str(print, "<ADC on ");
     mp_obj_print_helper(print, self->pin_name, PRINT_STR);
     mp_printf(print, " channel=%lu>", self->channel);
@@ -307,9 +307,9 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
         }
     }
 
-    pyb_obj_adc_t *o = m_new_obj(pyb_obj_adc_t);
+    robot_obj_adc_t *o = m_new_obj(robot_obj_adc_t);
     memset(o, 0, sizeof(*o));
-    o->base.type = &pyb_adc_type;
+    o->base.type = &robot_adc_type;
     o->pin_name = pin_obj;
     o->channel = channel;
     adc_init_single(o);
@@ -321,7 +321,7 @@ STATIC mp_obj_t adc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
 /// Read the value on the analog pin and return it.  The returned value
 /// will be between 0 and 4095.
 STATIC mp_obj_t adc_read(mp_obj_t self_in) {
-    pyb_obj_adc_t *self = self_in;
+    robot_obj_adc_t *self = self_in;
 
     adc_config_channel(&self->handle, self->channel);
     uint32_t data = adc_read_channel(&self->handle);
@@ -348,14 +348,14 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_read_obj, adc_read);
 ///
 /// Example using a Timer object (preferred way):
 ///
-///     adc = pyb.ADC(pyb.Pin.board.X19)    # create an ADC on pin X19
-///     tim = pyb.Timer(6, freq=10)         # create a timer running at 10Hz
+///     adc = robot.ADC(robot.Pin.board.X19)    # create an ADC on pin X19
+///     tim = robot.Timer(6, freq=10)         # create a timer running at 10Hz
 ///     buf = bytearray(100)                # creat a buffer to store the samples
 ///     adc.read_timed(buf, tim)            # sample 100 values, taking 10s
 ///
 /// Example using an integer for the frequency:
 ///
-///     adc = pyb.ADC(pyb.Pin.board.X19)    # create an ADC on pin X19
+///     adc = robot.ADC(robot.Pin.board.X19)    # create an ADC on pin X19
 ///     buf = bytearray(100)                # create a buffer of 100 bytes
 ///     adc.read_timed(buf, 10)             # read analog values into buf at 10Hz
 ///                                         #   this will take 10 seconds to finish
@@ -364,7 +364,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_read_obj, adc_read);
 ///
 /// This function does not allocate any memory.
 STATIC mp_obj_t adc_read_timed(mp_obj_t self_in, mp_obj_t buf_in, mp_obj_t freq_in) {
-    pyb_obj_adc_t *self = self_in;
+    robot_obj_adc_t *self = self_in;
 
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(buf_in, &bufinfo, MP_BUFFER_WRITE);
@@ -380,7 +380,7 @@ STATIC mp_obj_t adc_read_timed(mp_obj_t self_in, mp_obj_t buf_in, mp_obj_t freq_
     #endif
     {
         // use the supplied timer object as the sampling time base
-        tim = pyb_timer_get_handle(freq_in);
+        tim = robot_timer_get_handle(freq_in);
     }
 
     // configure the ADC channel
@@ -445,7 +445,7 @@ STATIC const mp_rom_map_elem_t adc_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(adc_locals_dict, adc_locals_dict_table);
 
-const mp_obj_type_t pyb_adc_type = {
+const mp_obj_type_t robot_adc_type = {
     { &mp_type_type },
     .name = MP_QSTR_ADC,
     .print = adc_print,
@@ -456,12 +456,12 @@ const mp_obj_type_t pyb_adc_type = {
 /******************************************************************************/
 /* adc all object                                                             */
 
-typedef struct _pyb_adc_all_obj_t {
+typedef struct _robot_adc_all_obj_t {
     mp_obj_base_t base;
     ADC_HandleTypeDef handle;
-} pyb_adc_all_obj_t;
+} robot_adc_all_obj_t;
 
-void adc_init_all(pyb_adc_all_obj_t *adc_all, uint32_t resolution, uint32_t en_mask) {
+void adc_init_all(robot_adc_all_obj_t *adc_all, uint32_t resolution, uint32_t en_mask) {
 
     switch (resolution) {
         case 6:  resolution = ADC_RESOLUTION_6B;  break;
@@ -602,8 +602,8 @@ STATIC mp_obj_t adc_all_make_new(const mp_obj_type_t *type, size_t n_args, size_
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
 
     // make ADCAll object
-    pyb_adc_all_obj_t *o = m_new_obj(pyb_adc_all_obj_t);
-    o->base.type = &pyb_adc_all_type;
+    robot_adc_all_obj_t *o = m_new_obj(robot_adc_all_obj_t);
+    o->base.type = &robot_adc_all_type;
     mp_int_t res = mp_obj_get_int(args[0]);
     uint32_t en_mask = 0xffffffff;
     if (n_args > 1) {
@@ -615,7 +615,7 @@ STATIC mp_obj_t adc_all_make_new(const mp_obj_type_t *type, size_t n_args, size_
 }
 
 STATIC mp_obj_t adc_all_read_channel(mp_obj_t self_in, mp_obj_t channel) {
-    pyb_adc_all_obj_t *self = self_in;
+    robot_adc_all_obj_t *self = self_in;
     uint32_t chan = adc_get_internal_channel(mp_obj_get_int(channel));
     uint32_t data = adc_config_and_read_channel(&self->handle, chan);
     return mp_obj_new_int(data);
@@ -623,7 +623,7 @@ STATIC mp_obj_t adc_all_read_channel(mp_obj_t self_in, mp_obj_t channel) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(adc_all_read_channel_obj, adc_all_read_channel);
 
 STATIC mp_obj_t adc_all_read_core_temp(mp_obj_t self_in) {
-    pyb_adc_all_obj_t *self = self_in;
+    robot_adc_all_obj_t *self = self_in;
     #if MICROPY_PY_BUILTINS_FLOAT
     float data = adc_read_core_temp_float(&self->handle);
     return mp_obj_new_float(data);
@@ -636,21 +636,21 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_all_read_core_temp_obj, adc_all_read_core_t
 
 #if MICROPY_PY_BUILTINS_FLOAT
 STATIC mp_obj_t adc_all_read_core_vbat(mp_obj_t self_in) {
-    pyb_adc_all_obj_t *self = self_in;
+    robot_adc_all_obj_t *self = self_in;
     float data = adc_read_core_vbat(&self->handle);
     return mp_obj_new_float(data);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_all_read_core_vbat_obj, adc_all_read_core_vbat);
 
 STATIC mp_obj_t adc_all_read_core_vref(mp_obj_t self_in) {
-    pyb_adc_all_obj_t *self = self_in;
+    robot_adc_all_obj_t *self = self_in;
     float data  = adc_read_core_vref(&self->handle);
     return mp_obj_new_float(data);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(adc_all_read_core_vref_obj, adc_all_read_core_vref);
 
 STATIC mp_obj_t adc_all_read_vref(mp_obj_t self_in) {
-    pyb_adc_all_obj_t *self = self_in;
+    robot_adc_all_obj_t *self = self_in;
     adc_read_core_vref(&self->handle);
     return mp_obj_new_float(3.3 * adc_refcor);
 }
@@ -669,7 +669,7 @@ STATIC const mp_rom_map_elem_t adc_all_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(adc_all_locals_dict, adc_all_locals_dict_table);
 
-const mp_obj_type_t pyb_adc_all_type = {
+const mp_obj_type_t robot_adc_all_type = {
     { &mp_type_type },
     .name = MP_QSTR_ADCAll,
     .make_new = adc_all_make_new,

@@ -106,7 +106,7 @@
 #define MICROPY_PY_SYS_STDFILES     (1)
 #define MICROPY_PY_SYS_STDIO_BUFFER (1)
 #ifndef MICROPY_PY_SYS_PLATFORM     // let boards override it if they want
-#define MICROPY_PY_SYS_PLATFORM     "pyboard"
+#define MICROPY_PY_SYS_PLATFORM     "robotoard"
 #endif
 #define MICROPY_PY_UERRNO           (1)
 #ifndef MICROPY_PY_THREAD
@@ -167,7 +167,7 @@
 
 // extra built in modules to add to the list of known ones
 extern const struct _mp_obj_module_t machine_module;
-extern const struct _mp_obj_module_t pyb_module;
+extern const struct _mp_obj_module_t robot_module;
 extern const struct _mp_obj_module_t stm_module;
 extern const struct _mp_obj_module_t mp_module_ubinascii;
 extern const struct _mp_obj_module_t mp_module_ure;
@@ -197,7 +197,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
-    { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
+    { MP_ROM_QSTR(MP_QSTR_robot), MP_ROM_PTR(&robot_module) }, \
     { MP_ROM_QSTR(MP_QSTR_stm), MP_ROM_PTR(&stm_module) }, \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, \
     { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
@@ -227,7 +227,7 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #define MICROPY_PORT_CONSTANTS \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
     { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&machine_module) }, \
-    { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
+    { MP_ROM_QSTR(MP_QSTR_robot), MP_ROM_PTR(&robot_module) }, \
     { MP_ROM_QSTR(MP_QSTR_stm), MP_ROM_PTR(&stm_module) }, \
 
 #if defined(MCU_SERIES_F7)
@@ -260,28 +260,28 @@ extern const struct _mp_obj_module_t mp_module_onewire;
 #define MICROPY_PORT_ROOT_POINTERS \
     const char *readline_hist[8]; \
     \
-    mp_obj_t pyb_hid_report_desc; \
+    mp_obj_t robot_hid_report_desc; \
     \
-    mp_obj_t pyb_config_main; \
+    mp_obj_t robot_config_main; \
     \
-    mp_obj_t pyb_switch_callback; \
+    mp_obj_t robot_switch_callback; \
     \
     mp_obj_t pin_class_mapper; \
     mp_obj_t pin_class_map_dict; \
     \
-    mp_obj_t pyb_extint_callback[PYB_EXTI_NUM_VECTORS]; \
+    mp_obj_t robot_extint_callback[PYB_EXTI_NUM_VECTORS]; \
     \
     /* pointers to all Timer objects (if they have been created) */ \
-    struct _pyb_timer_obj_t *pyb_timer_obj_all[MICROPY_HW_MAX_TIMER]; \
+    struct _robot_timer_obj_t *robot_timer_obj_all[MICROPY_HW_MAX_TIMER]; \
     \
     /* stdio is repeated on this UART object if it's not null */ \
-    struct _pyb_uart_obj_t *pyb_stdio_uart; \
+    struct _robot_uart_obj_t *robot_stdio_uart; \
     \
     /* pointers to all UART objects (if they have been created) */ \
-    struct _pyb_uart_obj_t *pyb_uart_obj_all[MICROPY_HW_MAX_UART]; \
+    struct _robot_uart_obj_t *robot_uart_obj_all[MICROPY_HW_MAX_UART]; \
     \
     /* pointers to all CAN objects (if they have been created) */ \
-    struct _pyb_can_obj_t *pyb_can_obj_all[2]; \
+    struct _robot_can_obj_t *robot_can_obj_all[2]; \
     \
     /* list of registered NICs */ \
     mp_obj_list_t mod_network_nic_list; \
@@ -329,16 +329,16 @@ static inline mp_uint_t disable_irq(void) {
     do { \
         extern void mp_handle_pending(void); \
         mp_handle_pending(); \
-        if (pyb_thread_enabled) { \
+        if (robot_thread_enabled) { \
             MP_THREAD_GIL_EXIT(); \
-            pyb_thread_yield(); \
+            robot_thread_yield(); \
             MP_THREAD_GIL_ENTER(); \
         } else { \
             __WFI(); \
         } \
     } while (0);
 
-#define MICROPY_THREAD_YIELD() pyb_thread_yield()
+#define MICROPY_THREAD_YIELD() robot_thread_yield()
 #else
 #define MICROPY_EVENT_POLL_HOOK \
     do { \

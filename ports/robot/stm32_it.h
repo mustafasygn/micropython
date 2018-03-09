@@ -65,7 +65,7 @@
   ******************************************************************************
   */
 
-extern int pyb_hard_fault_debug;
+extern int robot_hard_fault_debug;
 
 void NMI_Handler(void);
 void HardFault_Handler(void);

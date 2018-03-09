@@ -41,7 +41,7 @@
 #include "extmod/vfs_fat.h"
 #include "gccollect.h"
 #include "irq.h"
-#include "pybthread.h"
+#include "robotthread.h"
 #include "rng.h"
 #include "storage.h"
 #include "pin.h"
@@ -165,7 +165,7 @@ STATIC mp_obj_t machine_info(size_t n_args, const mp_obj_t *args) {
     }
 
     #if MICROPY_PY_THREAD
-    pyb_thread_dump();
+    robot_thread_dump();
     #endif
 
     if (n_args == 1) {
@@ -184,7 +184,7 @@ STATIC mp_obj_t machine_unique_id(void) {
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_unique_id_obj, machine_unique_id);
 
-// Resets the pyboard in a manner similar to pushing the external RESET button.
+// Resets the robotoard in a manner similar to pushing the external RESET button.
 STATIC mp_obj_t machine_reset(void) {
     NVIC_SystemReset();
     return mp_const_none;
@@ -199,7 +199,7 @@ MP_DEFINE_CONST_FUN_OBJ_0(machine_soft_reset_obj, machine_soft_reset);
 
 // Activate the bootloader without BOOT* pins.
 STATIC NORETURN mp_obj_t machine_bootloader(void) {
-    pyb_usb_dev_deinit();
+    robot_usb_dev_deinit();
     storage_flush();
 
     HAL_RCC_DeInit();
@@ -532,9 +532,9 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_bootloader),          MP_ROM_PTR(&machine_bootloader_obj) },
     { MP_ROM_QSTR(MP_QSTR_freq),                MP_ROM_PTR(&machine_freq_obj) },
 #if MICROPY_HW_ENABLE_RNG
-    { MP_ROM_QSTR(MP_QSTR_rng),                 MP_ROM_PTR(&pyb_rng_get_obj) },
+    { MP_ROM_QSTR(MP_QSTR_rng),                 MP_ROM_PTR(&robot_rng_get_obj) },
 #endif
-    { MP_ROM_QSTR(MP_QSTR_idle),                MP_ROM_PTR(&pyb_wfi_obj) },
+    { MP_ROM_QSTR(MP_QSTR_idle),                MP_ROM_PTR(&robot_wfi_obj) },
     { MP_ROM_QSTR(MP_QSTR_sleep),               MP_ROM_PTR(&machine_sleep_obj) },
     { MP_ROM_QSTR(MP_QSTR_deepsleep),           MP_ROM_PTR(&machine_deepsleep_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_cause),         MP_ROM_PTR(&machine_reset_cause_obj) },
@@ -542,8 +542,8 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_wake_reason),         MP_ROM_PTR(&machine_wake_reason_obj) },
 #endif
 
-    { MP_ROM_QSTR(MP_QSTR_disable_irq),         MP_ROM_PTR(&pyb_disable_irq_obj) },
-    { MP_ROM_QSTR(MP_QSTR_enable_irq),          MP_ROM_PTR(&pyb_enable_irq_obj) },
+    { MP_ROM_QSTR(MP_QSTR_disable_irq),         MP_ROM_PTR(&robot_disable_irq_obj) },
+    { MP_ROM_QSTR(MP_QSTR_enable_irq),          MP_ROM_PTR(&robot_enable_irq_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_time_pulse_us),       MP_ROM_PTR(&machine_time_pulse_us_obj) },
 
@@ -555,17 +555,17 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Signal),              MP_ROM_PTR(&machine_signal_type) },
 
 #if 0
-    { MP_ROM_QSTR(MP_QSTR_RTC),                 MP_ROM_PTR(&pyb_rtc_type) },
-    { MP_ROM_QSTR(MP_QSTR_ADC),                 MP_ROM_PTR(&pyb_adc_type) },
+    { MP_ROM_QSTR(MP_QSTR_RTC),                 MP_ROM_PTR(&robot_rtc_type) },
+    { MP_ROM_QSTR(MP_QSTR_ADC),                 MP_ROM_PTR(&robot_adc_type) },
 #endif
     { MP_ROM_QSTR(MP_QSTR_I2C),                 MP_ROM_PTR(&machine_i2c_type) },
     { MP_ROM_QSTR(MP_QSTR_SPI),                 MP_ROM_PTR(&machine_hard_spi_type) },
-    { MP_ROM_QSTR(MP_QSTR_UART),                MP_ROM_PTR(&pyb_uart_type) },
-    { MP_ROM_QSTR(MP_QSTR_WDT),                 MP_ROM_PTR(&pyb_wdt_type) },
+    { MP_ROM_QSTR(MP_QSTR_UART),                MP_ROM_PTR(&robot_uart_type) },
+    { MP_ROM_QSTR(MP_QSTR_WDT),                 MP_ROM_PTR(&robot_wdt_type) },
 #if 0
-    { MP_ROM_QSTR(MP_QSTR_Timer),               MP_ROM_PTR(&pyb_timer_type) },
-    { MP_ROM_QSTR(MP_QSTR_HeartBeat),           MP_ROM_PTR(&pyb_heartbeat_type) },
-    { MP_ROM_QSTR(MP_QSTR_SD),                  MP_ROM_PTR(&pyb_sd_type) },
+    { MP_ROM_QSTR(MP_QSTR_Timer),               MP_ROM_PTR(&robot_timer_type) },
+    { MP_ROM_QSTR(MP_QSTR_HeartBeat),           MP_ROM_PTR(&robot_heartbeat_type) },
+    { MP_ROM_QSTR(MP_QSTR_SD),                  MP_ROM_PTR(&robot_sd_type) },
 
     // class constants
     { MP_ROM_QSTR(MP_QSTR_IDLE),                MP_ROM_INT(PYB_PWR_MODE_ACTIVE) },
