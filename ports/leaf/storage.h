@@ -23,32 +23,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
-#define MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#ifndef MICROPY_INCLUDED_STMHAL_STORAGE_H
+#define MICROPY_INCLUDED_STMHAL_STORAGE_H
 
-typedef enum {
-    PYEXEC_MODE_RAW_REPL,
-    PYEXEC_MODE_FRIENDLY_REPL,
-} pyexec_mode_kind_t;
+#define FLASH_BLOCK_SIZE (512)
 
-extern pyexec_mode_kind_t pyexec_mode_kind;
+#define STORAGE_SYSTICK_MASK    (0x1ff) // 512ms
+#define STORAGE_IDLE_TICK(tick) (((tick) & STORAGE_SYSTICK_MASK) == 2)
 
-// Set this to the value (eg PYEXEC_FORCED_EXIT) that will be propagated through
-// the pyexec functions if a SystemExit exception is raised by the running code.
-// It will reset to 0 at the start of each execution (eg each REPL entry).
-extern int pyexec_system_exit;
+void storage_init(void);
+uint32_t storage_get_block_size(void);
+uint32_t storage_get_block_count(void);
+void storage_irq_handler(void);
+void storage_flush(void);
+bool storage_read_block(uint8_t *dest, uint32_t block);
+bool storage_write_block(const uint8_t *src, uint32_t block);
 
-#define PYEXEC_FORCED_EXIT (0x100)
-#define PYEXEC_SWITCH_MODE (0x200)
+// these return 0 on success, non-zero on error
+mp_uint_t storage_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks);
+mp_uint_t storage_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks);
 
-int pyexec_raw_repl(void);
-int pyexec_friendly_repl(void);
-int pyexec_file(const char *filename);
-int pyexec_frozen_module(const char *name);
-void pyexec_event_repl_init(void);
-int pyexec_event_repl_process_char(int c);
-extern uint8_t pyexec_repl_active;
+extern const struct _mp_obj_type_t leaf_flash_type;
 
-MP_DECLARE_CONST_FUN_OBJ_1(leaf_set_repl_info_obj);
+struct _fs_user_mount_t;
+void leaf_flash_init_vfs(struct _fs_user_mount_t *vfs);
 
-#endif // MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#endif // MICROPY_INCLUDED_STMHAL_STORAGE_H

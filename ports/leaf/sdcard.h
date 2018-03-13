@@ -23,32 +23,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
-#define MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#ifndef MICROPY_INCLUDED_STMHAL_SDCARD_H
+#define MICROPY_INCLUDED_STMHAL_SDCARD_H
 
-typedef enum {
-    PYEXEC_MODE_RAW_REPL,
-    PYEXEC_MODE_FRIENDLY_REPL,
-} pyexec_mode_kind_t;
+// this is a fixed size and should not be changed
+#define SDCARD_BLOCK_SIZE (512)
 
-extern pyexec_mode_kind_t pyexec_mode_kind;
+void sdcard_init(void);
+bool sdcard_is_present(void);
+bool sdcard_power_on(void);
+void sdcard_power_off(void);
+uint64_t sdcard_get_capacity_in_bytes(void);
 
-// Set this to the value (eg PYEXEC_FORCED_EXIT) that will be propagated through
-// the pyexec functions if a SystemExit exception is raised by the running code.
-// It will reset to 0 at the start of each execution (eg each REPL entry).
-extern int pyexec_system_exit;
+// these return 0 on success, non-zero on error
+mp_uint_t sdcard_read_blocks(uint8_t *dest, uint32_t block_num, uint32_t num_blocks);
+mp_uint_t sdcard_write_blocks(const uint8_t *src, uint32_t block_num, uint32_t num_blocks);
 
-#define PYEXEC_FORCED_EXIT (0x100)
-#define PYEXEC_SWITCH_MODE (0x200)
+extern const struct _mp_obj_type_t leaf_sdcard_type;
+extern const struct _mp_obj_base_t leaf_sdcard_obj;
 
-int pyexec_raw_repl(void);
-int pyexec_friendly_repl(void);
-int pyexec_file(const char *filename);
-int pyexec_frozen_module(const char *name);
-void pyexec_event_repl_init(void);
-int pyexec_event_repl_process_char(int c);
-extern uint8_t pyexec_repl_active;
+struct _fs_user_mount_t;
+void sdcard_init_vfs(struct _fs_user_mount_t *vfs, int part);
 
-MP_DECLARE_CONST_FUN_OBJ_1(leaf_set_repl_info_obj);
-
-#endif // MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#endif // MICROPY_INCLUDED_STMHAL_SDCARD_H

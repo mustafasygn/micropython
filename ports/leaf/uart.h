@@ -23,32 +23,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
-#define MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#ifndef MICROPY_INCLUDED_STMHAL_UART_H
+#define MICROPY_INCLUDED_STMHAL_UART_H
 
 typedef enum {
-    PYEXEC_MODE_RAW_REPL,
-    PYEXEC_MODE_FRIENDLY_REPL,
-} pyexec_mode_kind_t;
+    PYB_UART_NONE = 0,
+    PYB_UART_1 = 1,
+    PYB_UART_2 = 2,
+    PYB_UART_3 = 3,
+    PYB_UART_4 = 4,
+    PYB_UART_5 = 5,
+    PYB_UART_6 = 6,
+    PYB_UART_7 = 7,
+    PYB_UART_8 = 8,
+} leaf_uart_t;
 
-extern pyexec_mode_kind_t pyexec_mode_kind;
+typedef struct _leaf_uart_obj_t leaf_uart_obj_t;
+extern const mp_obj_type_t leaf_uart_type;
 
-// Set this to the value (eg PYEXEC_FORCED_EXIT) that will be propagated through
-// the pyexec functions if a SystemExit exception is raised by the running code.
-// It will reset to 0 at the start of each execution (eg each REPL entry).
-extern int pyexec_system_exit;
+void uart_init0(void);
+void uart_deinit(void);
+void uart_irq_handler(mp_uint_t uart_id);
 
-#define PYEXEC_FORCED_EXIT (0x100)
-#define PYEXEC_SWITCH_MODE (0x200)
+mp_uint_t uart_rx_any(leaf_uart_obj_t *uart_obj);
+int uart_rx_char(leaf_uart_obj_t *uart_obj);
+void uart_tx_strn(leaf_uart_obj_t *uart_obj, const char *str, uint len);
 
-int pyexec_raw_repl(void);
-int pyexec_friendly_repl(void);
-int pyexec_file(const char *filename);
-int pyexec_frozen_module(const char *name);
-void pyexec_event_repl_init(void);
-int pyexec_event_repl_process_char(int c);
-extern uint8_t pyexec_repl_active;
-
-MP_DECLARE_CONST_FUN_OBJ_1(leaf_set_repl_info_obj);
-
-#endif // MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#endif // MICROPY_INCLUDED_STMHAL_UART_H

@@ -23,32 +23,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
-#define MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#ifndef MICROPY_INCLUDED_STMHAL_SPI_H
+#define MICROPY_INCLUDED_STMHAL_SPI_H
 
-typedef enum {
-    PYEXEC_MODE_RAW_REPL,
-    PYEXEC_MODE_FRIENDLY_REPL,
-} pyexec_mode_kind_t;
+extern SPI_HandleTypeDef SPIHandle1;
+extern SPI_HandleTypeDef SPIHandle2;
+extern SPI_HandleTypeDef SPIHandle3;
+extern SPI_HandleTypeDef SPIHandle4;
+extern SPI_HandleTypeDef SPIHandle5;
+extern SPI_HandleTypeDef SPIHandle6;
+extern const mp_obj_type_t leaf_spi_type;
+extern const mp_obj_type_t machine_soft_spi_type;
+extern const mp_obj_type_t machine_hard_spi_type;
 
-extern pyexec_mode_kind_t pyexec_mode_kind;
+void spi_init0(void);
+void spi_init(SPI_HandleTypeDef *spi, bool enable_nss_pin);
+SPI_HandleTypeDef *spi_get_handle(mp_obj_t o);
 
-// Set this to the value (eg PYEXEC_FORCED_EXIT) that will be propagated through
-// the pyexec functions if a SystemExit exception is raised by the running code.
-// It will reset to 0 at the start of each execution (eg each REPL entry).
-extern int pyexec_system_exit;
-
-#define PYEXEC_FORCED_EXIT (0x100)
-#define PYEXEC_SWITCH_MODE (0x200)
-
-int pyexec_raw_repl(void);
-int pyexec_friendly_repl(void);
-int pyexec_file(const char *filename);
-int pyexec_frozen_module(const char *name);
-void pyexec_event_repl_init(void);
-int pyexec_event_repl_process_char(int c);
-extern uint8_t pyexec_repl_active;
-
-MP_DECLARE_CONST_FUN_OBJ_1(leaf_set_repl_info_obj);
-
-#endif // MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#endif // MICROPY_INCLUDED_STMHAL_SPI_H

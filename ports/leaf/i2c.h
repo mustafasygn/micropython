@@ -23,32 +23,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
-#define MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#ifndef MICROPY_INCLUDED_STMHAL_I2C_H
+#define MICROPY_INCLUDED_STMHAL_I2C_H
 
-typedef enum {
-    PYEXEC_MODE_RAW_REPL,
-    PYEXEC_MODE_FRIENDLY_REPL,
-} pyexec_mode_kind_t;
+#include "dma.h"
 
-extern pyexec_mode_kind_t pyexec_mode_kind;
+// use this for OwnAddress1 to configure I2C in master mode
+#define PYB_I2C_MASTER_ADDRESS (0xfe)
 
-// Set this to the value (eg PYEXEC_FORCED_EXIT) that will be propagated through
-// the pyexec functions if a SystemExit exception is raised by the running code.
-// It will reset to 0 at the start of each execution (eg each REPL entry).
-extern int pyexec_system_exit;
+typedef struct _leaf_i2c_obj_t {
+    mp_obj_base_t base;
+    I2C_HandleTypeDef *i2c;
+    const dma_descr_t *tx_dma_descr;
+    const dma_descr_t *rx_dma_descr;
+    bool *use_dma;
+} leaf_i2c_obj_t;
 
-#define PYEXEC_FORCED_EXIT (0x100)
-#define PYEXEC_SWITCH_MODE (0x200)
+extern I2C_HandleTypeDef I2CHandle1;
+extern I2C_HandleTypeDef I2CHandle2;
+extern I2C_HandleTypeDef I2CHandle3;
+extern const mp_obj_type_t leaf_i2c_type;
+extern const leaf_i2c_obj_t leaf_i2c_obj[4];
 
-int pyexec_raw_repl(void);
-int pyexec_friendly_repl(void);
-int pyexec_file(const char *filename);
-int pyexec_frozen_module(const char *name);
-void pyexec_event_repl_init(void);
-int pyexec_event_repl_process_char(int c);
-extern uint8_t pyexec_repl_active;
+void i2c_init0(void);
+void i2c_init(I2C_HandleTypeDef *i2c);
+void i2c_init_freq(const leaf_i2c_obj_t *self, mp_int_t freq);
+uint32_t i2c_get_baudrate(I2C_InitTypeDef *init);
+void i2c_ev_irq_handler(mp_uint_t i2c_id);
+void i2c_er_irq_handler(mp_uint_t i2c_id);
 
-MP_DECLARE_CONST_FUN_OBJ_1(leaf_set_repl_info_obj);
-
-#endif // MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#endif // MICROPY_INCLUDED_STMHAL_I2C_H

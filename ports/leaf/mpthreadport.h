@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2013, 2014 Damien P. George
+ * Copyright (c) 2016 Damien P. George
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,32 +23,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
-#define MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
 
-typedef enum {
-    PYEXEC_MODE_RAW_REPL,
-    PYEXEC_MODE_FRIENDLY_REPL,
-} pyexec_mode_kind_t;
+#include "py/mpthread.h"
+#include "leafthread.h"
 
-extern pyexec_mode_kind_t pyexec_mode_kind;
+typedef leaf_mutex_t mp_thread_mutex_t;
 
-// Set this to the value (eg PYEXEC_FORCED_EXIT) that will be propagated through
-// the pyexec functions if a SystemExit exception is raised by the running code.
-// It will reset to 0 at the start of each execution (eg each REPL entry).
-extern int pyexec_system_exit;
+void mp_thread_init(void);
+void mp_thread_gc_others(void);
 
-#define PYEXEC_FORCED_EXIT (0x100)
-#define PYEXEC_SWITCH_MODE (0x200)
+static inline void mp_thread_set_state(void *state) {
+    leaf_thread_set_local(state);
+}
 
-int pyexec_raw_repl(void);
-int pyexec_friendly_repl(void);
-int pyexec_file(const char *filename);
-int pyexec_frozen_module(const char *name);
-void pyexec_event_repl_init(void);
-int pyexec_event_repl_process_char(int c);
-extern uint8_t pyexec_repl_active;
+static inline struct _mp_state_thread_t *mp_thread_get_state(void) {
+    return leaf_thread_get_local();
+}
 
-MP_DECLARE_CONST_FUN_OBJ_1(leaf_set_repl_info_obj);
+static inline void mp_thread_mutex_init(mp_thread_mutex_t *m) {
+    leaf_mutex_init(m);
+}
 
-#endif // MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+static inline int mp_thread_mutex_lock(mp_thread_mutex_t *m, int wait) {
+    return leaf_mutex_lock(m, wait);
+}
+
+static inline void mp_thread_mutex_unlock(mp_thread_mutex_t *m) {
+    leaf_mutex_unlock(m);
+}

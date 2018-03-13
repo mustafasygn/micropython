@@ -522,9 +522,9 @@ int pyexec_frozen_module(const char *name) {
 }
 #endif
 
-mp_obj_t robot_set_repl_info(mp_obj_t o_value) {
+mp_obj_t leaf_set_repl_info(mp_obj_t o_value) {
     repl_display_debugging_info = mp_obj_get_int(o_value);
     return mp_const_none;
 }
 
-MP_DEFINE_CONST_FUN_OBJ_1(robot_set_repl_info_obj, robot_set_repl_info);
+MP_DEFINE_CONST_FUN_OBJ_1(leaf_set_repl_info_obj, leaf_set_repl_info);

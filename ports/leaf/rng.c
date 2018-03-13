@@ -23,32 +23,45 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
-#define MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
 
-typedef enum {
-    PYEXEC_MODE_RAW_REPL,
-    PYEXEC_MODE_FRIENDLY_REPL,
-} pyexec_mode_kind_t;
+#include <string.h>
 
-extern pyexec_mode_kind_t pyexec_mode_kind;
+#include "py/obj.h"
+#include "rng.h"
 
-// Set this to the value (eg PYEXEC_FORCED_EXIT) that will be propagated through
-// the pyexec functions if a SystemExit exception is raised by the running code.
-// It will reset to 0 at the start of each execution (eg each REPL entry).
-extern int pyexec_system_exit;
+#if MICROPY_HW_ENABLE_RNG
 
-#define PYEXEC_FORCED_EXIT (0x100)
-#define PYEXEC_SWITCH_MODE (0x200)
+/// \moduleref leaf
 
-int pyexec_raw_repl(void);
-int pyexec_friendly_repl(void);
-int pyexec_file(const char *filename);
-int pyexec_frozen_module(const char *name);
-void pyexec_event_repl_init(void);
-int pyexec_event_repl_process_char(int c);
-extern uint8_t pyexec_repl_active;
+STATIC RNG_HandleTypeDef RNGHandle = {.Instance = NULL};
 
-MP_DECLARE_CONST_FUN_OBJ_1(leaf_set_repl_info_obj);
+void rng_init0(void) {
+    // reset the RNG handle
+    memset(&RNGHandle, 0, sizeof(RNG_HandleTypeDef));
+    RNGHandle.Instance = RNG;
+}
 
-#endif // MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+void rng_init(void) {
+    __RNG_CLK_ENABLE();
+    HAL_RNG_Init(&RNGHandle);
+}
+
+uint32_t rng_get(void) {
+    if (RNGHandle.State == HAL_RNG_STATE_RESET) {
+        rng_init();
+    }
+    return HAL_RNG_GetRandomNumber(&RNGHandle);
+}
+
+/// \function rng()
+/// Return a 30-bit hardware generated random number.
+STATIC mp_obj_t leaf_rng_get(void) {
+    if (RNGHandle.State == HAL_RNG_STATE_RESET) {
+        rng_init();
+    }
+    return mp_obj_new_int(HAL_RNG_GetRandomNumber(&RNGHandle) >> 2);
+}
+
+MP_DEFINE_CONST_FUN_OBJ_0(leaf_rng_get_obj, leaf_rng_get);
+
+#endif // MICROPY_HW_ENABLE_RNG

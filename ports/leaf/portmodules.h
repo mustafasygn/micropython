@@ -23,32 +23,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
-#define MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#ifndef MICROPY_INCLUDED_STMHAL_PORTMODULES_H
+#define MICROPY_INCLUDED_STMHAL_PORTMODULES_H
 
-typedef enum {
-    PYEXEC_MODE_RAW_REPL,
-    PYEXEC_MODE_FRIENDLY_REPL,
-} pyexec_mode_kind_t;
+extern const mp_obj_module_t leaf_module;
+extern const mp_obj_module_t stm_module;
+extern const mp_obj_module_t mp_module_uos;
+extern const mp_obj_module_t mp_module_utime;
+extern const mp_obj_module_t mp_module_usocket;
 
-extern pyexec_mode_kind_t pyexec_mode_kind;
+// additional helper functions exported by the modules
 
-// Set this to the value (eg PYEXEC_FORCED_EXIT) that will be propagated through
-// the pyexec functions if a SystemExit exception is raised by the running code.
-// It will reset to 0 at the start of each execution (eg each REPL entry).
-extern int pyexec_system_exit;
+MP_DECLARE_CONST_FUN_OBJ_1(time_sleep_ms_obj);
+MP_DECLARE_CONST_FUN_OBJ_1(time_sleep_us_obj);
 
-#define PYEXEC_FORCED_EXIT (0x100)
-#define PYEXEC_SWITCH_MODE (0x200)
+MP_DECLARE_CONST_FUN_OBJ_0(mod_os_sync_obj);
+MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(mod_os_dupterm_obj);
 
-int pyexec_raw_repl(void);
-int pyexec_friendly_repl(void);
-int pyexec_file(const char *filename);
-int pyexec_frozen_module(const char *name);
-void pyexec_event_repl_init(void);
-int pyexec_event_repl_process_char(int c);
-extern uint8_t pyexec_repl_active;
-
-MP_DECLARE_CONST_FUN_OBJ_1(leaf_set_repl_info_obj);
-
-#endif // MICROPY_INCLUDED_LIB_UTILS_PYEXEC_H
+#endif // MICROPY_INCLUDED_STMHAL_PORTMODULES_H
