@@ -1,7 +1,7 @@
-#define MICROPY_HW_BOARD_NAME       "Robot V0.1"
-#define MICROPY_HW_MCU_NAME         "STM32F405RG"
+#define MICROPY_HW_BOARD_NAME       "Leaf V0.1"
+#define MICROPY_HW_MCU_NAME         "Unknown"
 
-#define MICROPY_HW_HAS_SWITCH       (1)
+#define MICROPY_HW_HAS_SWITCH       (0)
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_ENABLE_RNG       (1)
 #define MICROPY_HW_ENABLE_RTC       (1)
@@ -38,11 +38,6 @@
 #define MICROPY_HW_UART6_TX     (pin_C6)
 #define MICROPY_HW_UART6_RX     (pin_C7)
 
-// UART 6 connects to the BLE Chip
-// and this is exposed as a Bluetooth Serial port.
-#define MICROPY_HW_UART_REPL        PYB_UART_6
-#define MICROPY_HW_UART_REPL_BAUD   9600
-
 // I2C busses
 #define MICROPY_HW_I2C1_SCL (pin_B6)
 #define MICROPY_HW_I2C1_SDA (pin_B7)
@@ -59,19 +54,8 @@
 #define MICROPY_HW_SPI2_MISO (pin_B14) // Y7
 #define MICROPY_HW_SPI2_MOSI (pin_B15) // Y8
 
-// USRSW has no pullup or pulldown, and pressing the switch makes the input go low
-#define MICROPY_HW_USRSW_PIN        (pin_B3)
-#define MICROPY_HW_USRSW_PULL       (GPIO_PULLUP)
-#define MICROPY_HW_USRSW_EXTI_MODE  (GPIO_MODE_IT_FALLING)
-#define MICROPY_HW_USRSW_PRESSED    (0)
-
 // The leafoard has 4 LEDs
-#define MICROPY_HW_LED1             (pin_A13) // red
-#define MICROPY_HW_LED2             (pin_A14) // green
-#define MICROPY_HW_LED3             (pin_A15) // yellow
-#define MICROPY_HW_LED4             (pin_B4)  // blue
-#define MICROPY_HW_LED3_PWM         { TIM2, 2, TIM_CHANNEL_1, GPIO_AF1_TIM2 }
-#define MICROPY_HW_LED4_PWM         { TIM3, 3, TIM_CHANNEL_1, GPIO_AF2_TIM3 }
+#define MICROPY_HW_LED1             (pin_B3) // red
 #define MICROPY_HW_LED_ON(pin)      (mp_hal_pin_high(pin))
 #define MICROPY_HW_LED_OFF(pin)     (mp_hal_pin_low(pin))
 

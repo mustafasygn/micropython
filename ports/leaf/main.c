@@ -650,6 +650,19 @@ soft_reset:
 
     // At this point everything is fully configured and initialised.
 
+    // run _boot.py
+    if (reset_mode == 1 || reset_mode == 3) {
+        const char *_boot_py = "_boot.py";
+        printf("Run _boot.\n");
+        int ret = pyexec_frozen_module(_boot_py);
+        if (ret & PYEXEC_FORCED_EXIT) {
+            goto soft_reset_exit;
+        }
+        if (!ret) {
+            flash_error(4);
+        }
+    }
+
     // Run the main script from the current directory.
     if ((reset_mode == 1 || reset_mode == 3) && pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
         const char *main_py;
